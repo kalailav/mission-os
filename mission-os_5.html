@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Mission OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --bg: #080A0F;
+      --surface: #0F1219;
+      --surface2: #161B27;
+      --surface3: #1E2433;
+      --border: #252D40;
+      --border-light: #1A2035;
+      --text: #E8ECF4;
+      --text-muted: #8B95A8;
+      --text-dim: #4A5568;
+      --amber: #F59E0B;
+      --teal: #0D9488;
+      --indigo: #6366F1;
+      --red: #EF4444;
+      --green: #10B981;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+    body.light {
+      --bg: #F4F5F7;
+      --surface: #FFFFFF;
+      --surface2: #F0F1F4;
+      --surface3: #E4E6EB;
+      --border: #D8DAE0;
+      --border-light: #E8EAF0;
+      --text: #111827;
+      --text-muted: #6B7280;
+      --text-dim: #9CA3AF;
+      --amber: #D97706;
+      --teal: #0F766E;
+      --indigo: #4F46E5;
+      --red: #DC2626;
+      --green: #059669;
+    }
+    body.light::before { display: none; }
+    .theme-toggle {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; cursor: pointer; padding: 4px 10px;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      color: var(--text-muted); transition: all 0.2s;
+    }
+    .theme-toggle:hover { border-color: var(--amber); color: var(--text); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(99,102,241,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(13,148,136,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(245,158,11,0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; color: var(--text-dim); cursor: pointer;
+      padding: 6px 16px; border-radius: var(--radius-sm); transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .nav-btn.active { color: var(--amber); }
+    .nav-btn svg { width: 22px; height: 22px; }
+
+    /* ── HEADER ── */
+    .header {
+      position: sticky; top: 0;
+      background: rgba(8,10,15,0.92);
+      border-bottom: 1px solid var(--border-light);
+      padding: 14px 20px 10px;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+    }
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--amber); }
+    .header-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+    .icon-btn {
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s;
+    }
+    .icon-btn:hover { color: var(--text); }
+
+    /* ── MAIN ── */
+    .main { padding: 16px 16px 88px; max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── STATS ── */
+    .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px; text-align: center;
+    }
+    .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; color: var(--amber); }
+    .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* ── SECTION ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 1.5px; color: var(--text-muted); }
+    .badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px; }
+    .badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-teal  { background: rgba(13,148,136,0.15);  color: var(--teal);  border: 1px solid rgba(13,148,136,0.3); }
+    .badge-indigo{ background: rgba(99,102,241,0.15);  color: var(--indigo); border: 1px solid rgba(99,102,241,0.3); }
+    .badge-green { background: rgba(16,185,129,0.15);  color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+    .badge-red   { background: rgba(239,68,68,0.15);   color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+
+    /* ── TASK CARD ── */
+    .task-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 13px 14px; margin-bottom: 10px;
+      cursor: pointer; transition: all 0.18s; position: relative; overflow: hidden;
+    }
+    .task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .task-card.work::before     { background: var(--indigo); }
+    .task-card.personal::before { background: var(--teal); }
+    .task-card.health::before   { background: var(--green); }
+    .task-card.interview::before{ background: var(--amber); }
+    .task-card:hover { border-color: var(--surface3); background: var(--surface2); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .task-card.done  { opacity: 0.4; }
+    .task-card.done .task-title { text-decoration: line-through; }
+    .task-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .task-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
+    .task-title { font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--text); }
+    .priority-score { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1; min-width: 30px; text-align: right; }
+    .score-high { color: var(--red); }
+    .score-med  { color: var(--amber); }
+    .score-low  { color: var(--text-muted); }
+    .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .task-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); }
+    .chunk-bar { display: flex; gap: 3px; margin-top: 10px; }
+    .chunk-pill { height: 3px; border-radius: 2px; flex: 1; background: var(--border); transition: background 0.3s; }
+    .chunk-pill.done   { background: var(--green); }
+    .chunk-pill.active { background: var(--amber); }
+    .check-btn {
+      width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border);
+      background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0; margin-top: 1px;
+    }
+    .check-btn.done { background: var(--green); border-color: var(--green); }
+
+    /* ── CAPTURE ── */
+    .capture-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+    }
+    .capture-label { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
+    textarea, input[type="text"], input[type="password"] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 12px; resize: none; outline: none; transition: border-color 0.2s;
+    }
+    textarea:focus, input:focus { border-color: var(--amber); }
+    textarea::placeholder, input::placeholder { color: var(--text-dim); }
+
+    .voice-btn {
+      width: 100%; padding: 14px; background: var(--surface2);
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; transition: all 0.2s; margin-bottom: 12px;
+    }
+    .voice-btn.recording { border-color: var(--red); color: var(--red); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .primary-btn {
+      width: 100%; padding: 13px; background: var(--amber); color: #000;
+      border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .primary-btn:hover { background: #d68e00; }
+    .primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag-btn {
+      padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .tag-btn.selected { background: rgba(245,158,11,0.15); border-color: var(--amber); color: var(--amber); }
+    .tag-btn[data-cat="work"].selected    { background: rgba(99,102,241,0.15); border-color: var(--indigo); color: var(--indigo); }
+    .tag-btn[data-cat="personal"].selected{ background: rgba(13,148,136,0.15);  border-color: var(--teal);  color: var(--teal); }
+    .tag-btn[data-cat="health"].selected  { background: rgba(16,185,129,0.15);  border-color: var(--green); color: var(--green); }
+
+    /* ── ANALYSIS ── */
+    .analysis-panel {
+      background: var(--surface); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--radius); padding: 16px; margin-top: 12px; display: none;
+    }
+    .analysis-panel.visible { display: block; animation: fadeIn 0.25s ease; }
+    .analysis-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .analysis-header span { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--amber); }
+    .scores-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .score-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px; text-align: center;
+    }
+    .score-box-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; }
+    .score-box-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+    .chunks-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .chunk-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+    }
+    .chunk-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; line-height: 1; color: var(--amber); min-width: 20px; }
+    .chunk-detail { flex: 1; }
+    .chunk-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .chunk-dur { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); }
+    .approve-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .action-btn {
+      font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+      padding: 9px 14px; border-radius: 20px; border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.2px;
+    }
+    .action-btn-primary   { background: var(--amber); color: #000; }
+    .action-btn-secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .action-btn-danger    { background: transparent; color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+    /* ── LOADING ── */
+    .loading-indicator { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; color: var(--text-muted); font-size: 13px; }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--amber); border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CALENDAR ── */
+    .cal-upload-btn {
+      display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px;
+      background: var(--surface2); border: 1px dashed var(--border); border-radius: var(--radius);
+      color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px;
+      cursor: pointer; transition: all 0.2s; margin-bottom: 10px;
+    }
+    .cal-upload-btn:hover { border-color: var(--amber); color: var(--text); }
+    .cal-preview {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: none; line-height: 1.6;
+    }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 64px; }
+    .timeline-slot { position: relative; min-height: 52px; padding: 4px 0 4px 16px; border-left: 1px solid var(--border); }
+    .timeline-slot::before {
+      content: attr(data-time); position: absolute; left: -64px; top: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);
+      width: 54px; text-align: right;
+    }
+    .timeline-slot.current { border-left-color: var(--amber); }
+    .timeline-slot.current::after {
+      content: ''; position: absolute; left: -4px; top: 8px;
+      width: 7px; height: 7px; background: var(--amber); border-radius: 50%;
+      box-shadow: 0 0 8px var(--amber);
+    }
+    .timeline-block {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 7px 12px; margin-bottom: 5px;
+    }
+    .timeline-block.work     { border-left: 3px solid var(--indigo); }
+    .timeline-block.personal { border-left: 3px solid var(--teal); }
+    .timeline-block.health   { border-left: 3px solid var(--green); }
+    .timeline-block.interview{ border-left: 3px solid var(--amber); }
+    .timeline-block.blocked  { border-left: 3px solid var(--text-dim); opacity: 0.4; }
+    .timeline-block-title { font-size: 12px; font-weight: 500; color: var(--text); }
+    .timeline-block-dur { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── EXPORT ── */
+    .export-btn {
+      padding: 8px 14px; background: transparent; border: 1px solid var(--indigo); color: var(--indigo);
+      border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 12px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all 0.2s;
+    }
+    .export-btn:hover { background: rgba(99,102,241,0.1); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200;
+      display: none; align-items: flex-end; backdrop-filter: blur(5px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
+      border-top: 1px solid var(--border); width: 100%; max-height: 88vh; overflow-y: auto;
+      padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+      animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+
+    /* ── EMPTY ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+    .empty-state svg { width: 44px; height: 44px; margin: 0 auto 12px; display: block; opacity: 0.3; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+
+    /* ── SETTINGS ── */
+    .settings-section { margin-bottom: 24px; }
+    .settings-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
+    .settings-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; }
+    .settings-row label { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--surface3); border: 1px solid var(--border);
+      color: var(--text); padding: 9px 18px; border-radius: 20px; font-size: 13px;
+      opacity: 0; transition: all 0.25s; z-index: 300; white-space: nowrap; pointer-events: none;
+    }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── PRIORITY FILTER ── */
+    .filter-row { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+      font-size: 11px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .filter-btn.active { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.1); }
+
+    /* ── TIME PICKER ── */
+    input[type="time"] {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      padding: 8px 10px; outline: none; transition: border-color 0.2s; width: 100%;
+      color-scheme: dark;
+    }
+    input[type="time"]:focus { border-color: var(--amber); }
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .time-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+
+    /* ── QUICK ADD ── */
+    .quick-add-wrap { display: flex; gap: 8px; margin-bottom: 14px; }
+    .quick-add-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .quick-add-input:focus { border-color: var(--amber); }
+    .quick-add-input::placeholder { color: var(--text-dim); }
+    .quick-add-btn {
+      background: var(--amber); border: none; border-radius: var(--radius); color: #000;
+      font-size: 18px; font-weight: 700; cursor: pointer; padding: 0 16px;
+      transition: background 0.15s; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .quick-add-btn:hover { background: #d68e00; }
+    .quick-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── QUICK ANALYSIS INLINE ── */
+    .inline-analysis {
+      background: var(--surface); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--radius); padding: 14px; margin-bottom: 16px; display: none;
+    }
+    .inline-analysis.visible { display: block; animation: fadeIn 0.2s ease; }
+
+    /* ── BACKLOG ── */
+    .backlog-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px;
+      position: relative; overflow: hidden;
+    }
+    .backlog-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .backlog-item.work::before { background: var(--indigo); }
+    .backlog-item.personal::before { background: var(--teal); }
+    .backlog-item.health::before { background: var(--green); }
+    .backlog-item.interview::before { background: var(--amber); }
+    .backlog-item-body { flex: 1; min-width: 0; }
+    .backlog-item-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .backlog-item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .backlog-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .promote-btn {
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: var(--amber);
+      border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 11px;
+      padding: 5px 10px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .promote-btn:hover { background: rgba(245,158,11,0.25); }
+    .drop-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      border-radius: var(--radius-sm); font-size: 11px; padding: 5px 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .drop-btn:hover { border-color: var(--red); color: var(--red); }
+    .backlog-input-wrap { display: flex; gap: 8px; margin-bottom: 14px; }
+    .backlog-input {
+      flex: 1; background: var(--surface); border: 1px dashed var(--border);
+      border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 11px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .backlog-input:focus { border-color: var(--teal); }
+    .backlog-input::placeholder { color: var(--text-dim); }
+    .backlog-add-btn {
+      background: rgba(13,148,136,0.15); border: 1px solid rgba(13,148,136,0.4); color: var(--teal);
+      border-radius: var(--radius); font-size: 18px; font-weight: 700; cursor: pointer;
+      padding: 0 15px; flex-shrink: 0; transition: all 0.15s;
+    }
+    .backlog-add-btn:hover { background: rgba(13,148,136,0.25); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <span class="brand">MISSION OS</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="header-date" id="currentDate"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+        <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
+      </button>
+      <button class="icon-btn" onclick="switchView('settings')" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div id="view-dashboard" class="view active">
+    <div class="stats-strip">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-tasks">0</div>
+        <div class="stat-label">Tasks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-hours">0h</div>
+        <div class="stat-label">Planned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-done">0%</div>
+        <div class="stat-label">Done</div>
+      </div>
+    </div>
+
+    <!-- Calendar Upload -->
+    <div class="capture-card" style="margin-bottom:20px">
+      <div class="capture-label">📅 Calendar Context</div>
+      <label class="cal-upload-btn" for="calInput">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Upload Outlook Calendar Screenshot
+      </label>
+      <input type="file" id="calInput" accept="image/*" style="display:none" onchange="handleCalUpload(event)">
+      <div class="cal-preview" id="calPreview"></div>
+      <div id="calFreeSlots"></div>
+    </div>
+
+    <!-- Quick Add -->
+    <div class="quick-add-wrap">
+      <input class="quick-add-input" id="quickAddInput" type="text" placeholder="Type any task and press ↵ — Claude will validate & chunk it" onkeydown="if(event.key==='Enter')quickAddTask()">
+      <button class="quick-add-btn" id="quickAddBtn" onclick="quickAddTask()" title="Analyze & add">+</button>
+    </div>
+
+    <!-- Inline Claude Analysis (appears after quick-add) -->
+    <div class="inline-analysis" id="inlineAnalysis">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="var(--amber)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:var(--amber)">Claude's Read</span>
+        </div>
+        <button onclick="dismissInline()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;line-height:1">×</button>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px" id="inlineTitle"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px" id="inlineScores"></div>
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Chunks</div>
+      <div id="inlineChunks" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <div id="inlineNote" style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:12px;line-height:1.5"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button class="action-btn action-btn-secondary" onclick="dismissInline()">Discard</button>
+        <button class="action-btn action-btn-secondary" style="color:var(--teal);border-color:rgba(13,148,136,0.4)" onclick="sendToBacklog()">→ Backlog</button>
+        <button class="action-btn action-btn-primary" onclick="confirmQuickAdd()">✓ Add Now</button>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('work', this)">Work</button>
+      <button class="filter-btn" onclick="setFilter('interview', this)">Interview</button>
+      <button class="filter-btn" onclick="setFilter('health', this)">Health</button>
+      <button class="filter-btn" onclick="setFilter('personal', this)">Personal</button>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Priority Queue</span>
+      <span class="badge badge-amber" id="task-count-badge">0 tasks</span>
+    </div>
+    <div id="task-list">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <p>No tasks yet.<br>Tap <strong style="color:var(--amber)">Capture</strong> to add your first task.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CAPTURE ── -->
+  <div id="view-capture" class="view">
+
+    <div class="capture-card">
+      <div class="capture-label">🎙 Voice Capture</div>
+      <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/></svg>
+        <span id="voiceBtnText">Tap to speak your task</span>
+      </button>
+    </div>
+
+    <div class="capture-card">
+      <div class="capture-label">✍ Task or Email Paste</div>
+      <textarea id="captureInput" rows="5" placeholder="Describe your task or paste an email... Claude will extract, score, and chunk it for you."></textarea>
+
+      <div style="margin-top:12px">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Category</div>
+        <div class="tag-row" id="catRow">
+          <button class="tag-btn selected" data-cat="work" onclick="selectCat(this)">Work</button>
+          <button class="tag-btn" data-cat="personal" onclick="selectCat(this)">Personal</button>
+          <button class="tag-btn" data-cat="health" onclick="selectCat(this)">Health</button>
+          <button class="tag-btn" data-cat="interview" onclick="selectCat(this)">Interview Prep</button>
+        </div>
+      </div>
+
+      <button class="primary-btn" style="margin-top:14px" onclick="analyzeTask()" id="analyzeBtn">
+        ✦ Analyze with Claude
+      </button>
+    </div>
+
+    <div id="loadingIndicator" style="display:none">
+      <div class="loading-indicator">
+        <div class="spinner"></div>
+        Claude is analyzing your task...
+      </div>
+    </div>
+
+    <div class="analysis-panel" id="analysisPanel">
+      <div class="analysis-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="var(--amber)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Claude's Recommendation</span>
+      </div>
+      <div class="scores-row">
+        <div class="score-box">
+          <div class="score-box-val" id="urgScore" style="color:var(--red)">—</div>
+          <div class="score-box-label">Urgency</div>
+        </div>
+        <div class="score-box">
+          <div class="score-box-val" id="impScore" style="color:var(--indigo)">—</div>
+          <div class="score-box-label">Importance</div>
+        </div>
+        <div class="score-box">
+          <div class="score-box-val" id="priScore" style="color:var(--amber)">—</div>
+          <div class="score-box-label">Priority</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Suggested Chunks</div>
+      <div class="chunks-list" id="chunksList"></div>
+      <div id="claudeNote" style="font-size:12px;color:var(--text-muted);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:6px;line-height:1.5;font-style:italic"></div>
+      <div class="approve-row">
+        <button class="action-btn action-btn-secondary" onclick="clearCapture()">Discard</button>
+        <button class="action-btn action-btn-primary" onclick="approveTask()">✓ Add to Queue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TIMELINE ── -->
+  <div id="view-timeline" class="view">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Today's Timeline</span>
+      <button class="export-btn" onclick="exportICS()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export Work ICS
+      </button>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- ── BACKLOG ── -->
+  <div id="view-backlog" class="view">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Backlog</span>
+      <span class="badge badge-teal" id="backlog-count-badge">0 items</span>
+    </div>
+    <div class="backlog-input-wrap">
+      <input class="backlog-input" id="backlogInput" type="text" placeholder="Stack a task idea — no pressure, no deadline..." onkeydown="if(event.key==='Enter')addToBacklog()">
+      <button class="backlog-add-btn" onclick="addToBacklog()">+</button>
+    </div>
+    <div id="backlog-list">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <p>Backlog is empty.<br>Stack ideas here — promote to queue when ready.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div id="view-settings" class="view">
+    <div class="settings-section">
+      <div class="settings-title">🔥 Firebase Database</div>
+      <div class="settings-row">
+        <label>Firebase Config (paste JSON from Firebase Console)</label>
+        <textarea id="firebaseConfigInput" rows="6" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+        <button class="primary-btn" style="margin-top:10px" onclick="connectFirebase()">🔥 Connect & Sync</button>
+        <div id="firebaseStatus" style="font-size:11px;margin-top:8px;padding:6px 10px;border-radius:6px;display:none"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.7;padding:0 2px">
+        Free setup — takes 3 minutes:<br>
+        1. Go to <strong>console.firebase.google.com</strong><br>
+        2. Create project → Add web app → Copy config<br>
+        3. Enable <strong>Firestore Database</strong> in test mode<br>
+        4. Paste config above and tap Connect<br><br>
+        Once connected, all tasks sync instantly across your phone and desktop.
+      </div>
+    </div>
+      <div class="settings-row">
+        <label>API Key — Claude Sonnet 4.6</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
+        <button class="primary-btn" style="margin-top:10px" onclick="saveApiKey()">Save for This Session</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;padding:0 2px">
+        Key stored in session memory only—not saved to disk. Get yours at <strong>console.anthropic.com</strong>.<br>
+        Estimated cost: ~$10–20/month at 1,000 analyses using Sonnet 4.6.
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Model</div>
+      <div class="settings-row">
+        <label>Active Model</label>
+        <select id="modelSelect" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px;outline:none">
+          <option value="claude-sonnet-4-5">Claude Sonnet 4.6 (Recommended)</option>
+          <option value="claude-opus-4-5">Claude Opus 4.6 (Deeper reasoning, higher cost)</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Fastest, lowest cost)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Data</div>
+      <div class="settings-row">
+        <label>Task Management</label>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn action-btn-secondary" onclick="exportAllJSON()" style="flex:1;padding:10px">Export JSON</button>
+          <button class="action-btn action-btn-danger" onclick="clearAllTasks()" style="flex:1;padding:10px">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">About</div>
+      <div class="settings-row">
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7">
+          <strong style="color:var(--text)">Mission OS</strong> — Personal life operating system.<br><br>
+          Voice or text capture → Claude scores urgency + importance → chunks into 30–90 min blocks → syncs to your day view → exports work tasks as ICS for Outlook.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="switchView('dashboard')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" id="nav-capture" onclick="switchView('capture')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v8M8 12h8"/></svg>
+    Capture
+  </button>
+  <button class="nav-btn" id="nav-backlog" onclick="switchView('backlog')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+    Backlog
+  </button>
+  <button class="nav-btn" id="nav-timeline" onclick="switchView('timeline')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timeline
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="taskModal" onclick="closeModal()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────
+let tasks = [];
+let backlog = [];
+let apiKey = '';
+let activeModel = 'claude-sonnet-4-5';
+let currentCategory = 'work';
+let activeFilter = 'all';
+let recognition = null;
+let isRecording = false;
+let calendarContext = '';
+let pendingAnalysis = null;
+
+// ── FIREBASE STATE ────────────────────────────────────────────
+let db = null;
+let fbConfigured = false;
+let unsubTasks = null;
+let unsubBacklog = null;
+
+// ── FIREBASE ──────────────────────────────────────────────────
+function connectFirebase() {
+  let raw = document.getElementById('firebaseConfigInput').value.trim();
+  const statusEl = document.getElementById('firebaseStatus');
+  if (!raw) { showToast('Paste your Firebase config first.'); return; }
+  try {
+    // Strip const/var/let assignment and semicolons
+    raw = raw.replace(/^[\s\S]*?=\s*/, '').replace(/;[\s]*$/, '').trim();
+    // Strip wrapping () if present
+    if (raw.startsWith('(')) raw = raw.slice(1, -1).trim();
+    // Add quotes around unquoted keys
+    raw = raw.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
+    // Clean up markdown link format [text](url) → just the url
+    raw = raw.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$2');
+    const config = JSON.parse(raw);
+    if (firebase.apps.length) {
+      firebase.app().delete().then(() => initFB(config, statusEl));
+    } else {
+      initFB(config, statusEl);
+    }
+  } catch(e) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '✕ Parse error: ' + e.message;
+  }
+}
+
+function initFB(config, statusEl) {
+  try {
+    firebase.initializeApp(config);
+    db = firebase.firestore();
+    fbConfigured = true;
+    // Save config key to session
+    sessionStorage.setItem('fbConfig', JSON.stringify(config));
+    localStorage.setItem('fbConfig', JSON.stringify(config));
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(16,185,129,0.1)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Connected! Syncing data across all your devices.';
+    subscribeToFirestore();
+    showToast('🔥 Firebase connected — data syncing!');
+  } catch(e) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(239,68,68,0.1)';
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '✕ Connection failed: ' + e.message;
+    }
+  }
+}
+
+function subscribeToFirestore() {
+  if (!db) return;
+  // Real-time tasks listener
+  if (unsubTasks) unsubTasks();
+  unsubTasks = db.collection('tasks')
+    .orderBy('priorityScore', 'desc')
+    .onSnapshot(snap => {
+      tasks = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }));
+      renderTasks();
+      renderTimeline();
+      updateStats();
+    }, err => console.error('Tasks sync error:', err));
+
+  // Real-time backlog listener
+  if (unsubBacklog) unsubBacklog();
+  unsubBacklog = db.collection('backlog')
+    .onSnapshot(snap => {
+      backlog = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }));
+      renderBacklog();
+    }, err => console.error('Backlog sync error:', err));
+}
+
+async function fbSaveTask(task) {
+  if (!db) return;
+  try {
+    await db.collection('tasks').doc(String(task.id)).set(task);
+  } catch(e) { console.error('Save task error:', e); }
+}
+
+async function fbDeleteTask(id) {
+  if (!db) return;
+  try {
+    await db.collection('tasks').doc(String(id)).delete();
+  } catch(e) { console.error('Delete task error:', e); }
+}
+
+async function fbSaveBacklogItem(item) {
+  if (!db) return;
+  try {
+    await db.collection('backlog').doc(String(item.id)).set(item);
+  } catch(e) { console.error('Save backlog error:', e); }
+}
+
+async function fbDeleteBacklogItem(id) {
+  if (!db) return;
+  try {
+    await db.collection('backlog').doc(String(id)).delete();
+  } catch(e) { console.error('Delete backlog error:', e); }
+}
+
+// Try auto-reconnect from localStorage
+function tryAutoConnectFirebase() {
+  try {
+    const saved = localStorage.getItem('fbConfig');
+    if (saved) {
+      const config = JSON.parse(saved);
+      if (firebase.apps.length) return;
+      firebase.initializeApp(config);
+      db = firebase.firestore();
+      fbConfigured = true;
+      subscribeToFirestore();
+      const el = document.getElementById('firebaseConfigInput');
+      if (el) el.value = saved;
+      const status = document.getElementById('firebaseStatus');
+      if (status) {
+        status.style.display = 'block';
+        status.style.background = 'rgba(16,185,129,0.1)';
+        status.style.color = 'var(--green)';
+        status.textContent = '✓ Firebase connected — syncing your data.';
+      }
+    }
+  } catch(e) { /* silent fail */ }
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init() {
+  const d = new Date();
+  document.getElementById('currentDate').textContent =
+    d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+  loadSavedSettings();
+  tryAutoConnectFirebase();
+  if (!fbConfigured) {
+    seedDemo();
+    renderTasks();
+    renderTimeline();
+    renderBacklog();
+  }
+}
+
+// ── THEME ─────────────────────────────────────────────────────
+let isLight = false;
+function toggleTheme() {
+  isLight = !isLight;
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = isLight ? 'Dark' : 'Light';
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  const nb = document.getElementById('nav-' + view);
+  if (nb) nb.classList.add('active');
+}
+
+// ── FILTER ───────────────────────────────────────────────────
+function setFilter(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTasks();
+}
+
+// ── CATEGORY ─────────────────────────────────────────────────
+function selectCat(btn) {
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  currentCategory = btn.dataset.cat;
+}
+
+// ── VOICE ────────────────────────────────────────────────────
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice not supported — try Chrome on Android.'); return; }
+  if (isRecording) { recognition.stop(); return; }
+
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('voiceBtn').classList.add('recording');
+    document.getElementById('voiceBtnText').textContent = '● Recording — tap to stop';
+  };
+  recognition.onresult = (e) => {
+    let t = '';
+    for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+    document.getElementById('captureInput').value = t;
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('voiceBtn').classList.remove('recording');
+    document.getElementById('voiceBtnText').textContent = 'Tap to speak your task';
+  };
+  recognition.start();
+}
+
+// ── CALENDAR UPLOAD ───────────────────────────────────────────
+function handleCalUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const mediaType = file.type;
+    const preview = document.getElementById('calPreview');
+    preview.style.display = 'block';
+    preview.textContent = '📅 Analyzing calendar screenshot...';
+
+    if (!apiKey) {
+      calendarContext = 'User uploaded a calendar screenshot.';
+      preview.textContent = '✓ Screenshot saved. Add API key in Settings to enable AI parsing.';
+      return;
+    }
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: activeModel,
+          max_tokens: 800,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: 'Analyze this calendar. Extract busy slots and free slots. Return ONLY JSON: {"blocked":[{"time":"9:00-10:00","title":"Meeting"}],"free":["10:00-11:00","2:00-3:00"]}' }
+            ]
+          }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content[0].text;
+      const cal = JSON.parse(text.replace(/```json|```/g,'').trim());
+      calendarContext = JSON.stringify(cal);
+      preview.innerHTML =
+        `<strong style="color:var(--text)">📅 Calendar parsed</strong><br>` +
+        `<span style="color:var(--red)">Blocked: ${(cal.blocked||[]).map(b=>b.time+' '+b.title).join(', ')||'none'}</span><br>` +
+        `<span style="color:var(--green)">Free: ${(cal.free||[]).join(', ')||'none detected'}</span>`;
+      renderFreeSlots(cal.free || []);
+    } catch(err) {
+      preview.textContent = '✓ Screenshot saved. Will use as context for task scheduling.';
+      calendarContext = 'User uploaded a calendar screenshot but parsing failed.';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderFreeSlots(slots) {
+  const c = document.getElementById('calFreeSlots');
+  if (!slots.length) { c.innerHTML = ''; return; }
+  c.innerHTML = `<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:8px;margin-bottom:6px">Available Slots</div>` +
+    slots.map(s => `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--border-light)">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)">${s}</span>
+      <span style="font-size:11px;color:var(--text-muted)">Open</span>
+    </div>`).join('');
+}
+
+// ── ANALYZE ───────────────────────────────────────────────────
+async function analyzeTask() {
+  const input = document.getElementById('captureInput').value.trim();
+  if (!input) { showToast('Enter a task or paste an email first.'); return; }
+
+  document.getElementById('analysisPanel').classList.remove('visible');
+  document.getElementById('loadingIndicator').style.display = 'block';
+  document.getElementById('analyzeBtn').disabled = true;
+
+  const systemPrompt = `You are a personal productivity AI for a senior Amazon Program Manager.
+Analyze tasks and return ONLY valid JSON with this exact structure (no other text):
+{
+  "title": "concise task title max 10 words",
+  "urgencyScore": 8,
+  "importanceScore": 7,
+  "priorityScore": 8,
+  "chunks": [
+    {"title": "chunk name", "duration": 30, "description": "what to do in this chunk"}
+  ],
+  "suggestedTimeBlock": "10:00 AM - 11:00 AM",
+  "note": "one sentence reasoning"
+}
+Rules: duration in minutes; max 4 chunks; chunks should be 25-90 min each; priorityScore = weighted average of urgency and importance; consider deadlines, stakeholder impact, and strategic importance.
+Calendar context (respect these blocks): ${calendarContext || 'No calendar provided — assume standard 9-5 workday with some meetings.'}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: activeModel,
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: input }]
+      })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content[0].text;
+    const analysis = JSON.parse(text.replace(/```json|```/g,'').trim());
+    pendingAnalysis = { ...analysis, rawInput: input, category: currentCategory };
+    showAnalysis(analysis);
+  } catch(err) {
+    // Demo mode fallback
+    const wordCount = input.split(' ').length;
+    const demo = {
+      title: input.length > 55 ? input.substring(0,52)+'...' : input,
+      urgencyScore: 7, importanceScore: 8, priorityScore: 8,
+      chunks: [
+        { title: 'Prepare & draft', duration: 30, description: 'Set up context and create initial draft' },
+        { title: 'Review & refine', duration: 20, description: 'Edit for quality and alignment' },
+        { title: 'Send & confirm', duration: 10, description: 'Distribute and confirm receipt' }
+      ],
+      suggestedTimeBlock: 'Next available slot',
+      note: apiKey ? `Error connecting to Claude: ${err.message}` : 'Demo mode — add your Claude API key in Settings for real AI analysis.'
+    };
+    pendingAnalysis = { ...demo, rawInput: input, category: currentCategory };
+    showAnalysis(demo);
+  }
+
+  document.getElementById('loadingIndicator').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+function showAnalysis(a) {
+  document.getElementById('urgScore').textContent = a.urgencyScore;
+  document.getElementById('impScore').textContent = a.importanceScore;
+  document.getElementById('priScore').textContent = a.priorityScore;
+  document.getElementById('claudeNote').textContent = a.note || '';
+  const list = document.getElementById('chunksList');
+  list.innerHTML = (a.chunks||[]).map((c,i) => `
+    <div class="chunk-item">
+      <div class="chunk-num">${i+1}</div>
+      <div class="chunk-detail">
+        <div class="chunk-title">${c.title}</div>
+        <div class="chunk-dur">⏱ ${c.duration} min — ${c.description}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('analysisPanel').classList.add('visible');
+}
+
+// ── APPROVE ───────────────────────────────────────────────────
+function approveTask() {
+  if (!pendingAnalysis) return;
+  const task = {
+    id: Date.now(),
+    title: pendingAnalysis.title || pendingAnalysis.rawInput.substring(0,55),
+    rawInput: pendingAnalysis.rawInput,
+    category: pendingAnalysis.category || 'work',
+    urgencyScore: pendingAnalysis.urgencyScore || 5,
+    importanceScore: pendingAnalysis.importanceScore || 5,
+    priorityScore: pendingAnalysis.priorityScore || 5,
+    chunks: pendingAnalysis.chunks || [],
+    suggestedTimeBlock: pendingAnalysis.suggestedTimeBlock || '',
+    note: pendingAnalysis.note || '',
+    startTime: '', endTime: '',
+    done: false, chunksCompleted: 0
+  };
+  if (fbConfigured) { fbSaveTask(task); }
+  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+  clearCapture();
+  showToast('✓ Task added to queue!');
+  switchView('dashboard');
+}
+
+function clearCapture() {
+  document.getElementById('captureInput').value = '';
+  document.getElementById('analysisPanel').classList.remove('visible');
+  pendingAnalysis = null;
+}
+
+// ── RENDER TASKS ──────────────────────────────────────────────
+function renderTasks() {
+  const container = document.getElementById('task-list');
+  const filtered = activeFilter === 'all' ? tasks : tasks.filter(t => t.category === activeFilter);
+  document.getElementById('task-count-badge').textContent = tasks.length + ' task' + (tasks.length!==1?'s':'');
+  updateStats();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <p>${activeFilter === 'all' ? 'No tasks yet.<br>Tap <strong style="color:var(--amber)">Capture</strong> to add your first task.' : 'No ' + activeFilter + ' tasks.'}</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(task => {
+    const sc = task.priorityScore >= 8 ? 'score-high' : task.priorityScore >= 5 ? 'score-med' : 'score-low';
+    const totalTime = task.chunks.reduce((s,c) => s+c.duration, 0);
+    const catBadge = task.category === 'work' ? 'indigo' : task.category === 'personal' ? 'teal' : task.category === 'health' ? 'green' : 'amber';
+    const bars = task.chunks.map((_,i) =>
+      `<div class="chunk-pill ${i < task.chunksCompleted ? 'done' : i === task.chunksCompleted ? 'active' : ''}"></div>`
+    ).join('');
+    return `
+      <div class="task-card ${task.category} ${task.done?'done':''}" onclick="openTask(${task.id})">
+        <div class="task-top">
+          <div class="task-left">
+            <button class="check-btn ${task.done?'done':''}" onclick="event.stopPropagation();toggleDone(${task.id})">
+              ${task.done?`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`:''}
+            </button>
+            <span class="task-title">${task.title}</span>
+          </div>
+          <span class="priority-score ${sc}">${task.priorityScore}</span>
+        </div>
+        <div class="task-meta">
+          <span class="badge badge-${catBadge}">${task.category}</span>
+          ${totalTime > 0 ? `<span class="task-time">⏱ ${totalTime}m</span>` : ''}
+          ${task.suggestedTimeBlock ? `<span class="task-time">📅 ${task.suggestedTimeBlock}</span>` : ''}
+        </div>
+        ${task.chunks.length > 0 ? `<div class="chunk-bar">${bars}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── TASK MODAL ────────────────────────────────────────────────
+function openTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const totalTime = task.chunks.reduce((s,c)=>s+c.duration,0);
+  const sc = task.priorityScore>=8?'score-high':task.priorityScore>=5?'score-med':'score-low';
+  const catBadge = task.category==='work'?'indigo':task.category==='personal'?'teal':task.category==='health'?'green':'amber';
+
+  let html = `
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px">
+      <div style="flex:1">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1.2;margin-bottom:6px">${task.title}</div>
+        <span class="badge badge-${catBadge}">${task.category}</span>
+      </div>
+      <div style="text-align:right">
+        <div class="priority-score ${sc}" style="font-size:34px">${task.priorityScore}</div>
+        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
+      </div>
+    </div>
+    <div class="time-row">
+      <div>
+        <div class="time-label">Start Time</div>
+        <input type="time" id="startTimeInput" value="${task.startTime||'09:00'}" onchange="updateTaskTime(${id})">
+      </div>
+      <div>
+        <div class="time-label">End Time</div>
+        <input type="time" id="endTimeInput" value="${task.endTime||calcEndTime(task)}" onchange="updateTaskTime(${id})">
+      </div>
+    </div>
+    <div class="scores-row">
+      <div class="score-box"><div class="score-box-val" style="color:var(--red)">${task.urgencyScore}</div><div class="score-box-label">Urgency</div></div>
+      <div class="score-box"><div class="score-box-val" style="color:var(--indigo)">${task.importanceScore}</div><div class="score-box-label">Importance</div></div>
+      <div class="score-box"><div class="score-box-val" style="color:var(--teal)">${task.chunks.length}</div><div class="score-box-label">Chunks</div></div>
+    </div>
+    ${task.note?`<div style="font-size:12px;color:var(--text-muted);padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:14px;line-height:1.6;font-style:italic">"${task.note}"</div>`:''}
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Work Chunks</div>
+    <div class="chunks-list">`;
+
+  task.chunks.forEach((chunk, i) => {
+    const isDone = i < task.chunksCompleted;
+    const isActive = i === task.chunksCompleted && !task.done;
+    html += `
+      <div class="chunk-item" style="${isDone?'opacity:0.45':''}">
+        <div class="chunk-num" style="color:${isDone?'var(--green)':isActive?'var(--amber)':'var(--text-dim)'}">${isDone?'✓':i+1}</div>
+        <div class="chunk-detail" style="flex:1">
+          <div class="chunk-title" style="${isDone?'text-decoration:line-through':''}">${chunk.title}</div>
+          <div class="chunk-dur">⏱ ${chunk.duration} min — ${chunk.description}</div>
+        </div>
+        ${isActive?`<button class="action-btn action-btn-primary" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="completeChunk(${id})">Done</button>`:''}
+      </div>`;
+  });
+
+  html += `</div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      ${task.category==='work'?`<button class="export-btn" onclick="exportSingleTask(${id})" style="flex:1;min-width:140px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export to Outlook (.ics)
+      </button>`:''}
+      <button class="action-btn action-btn-danger" onclick="deleteTask(${id})" style="flex:1;padding:10px;min-width:100px">Delete</button>
+    </div>`;
+
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('taskModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
+
+function completeChunk(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  task.chunksCompleted = Math.min(task.chunksCompleted+1, task.chunks.length);
+  if (task.chunksCompleted === task.chunks.length) task.done = true;
+  if (fbConfigured) fbSaveTask(task); else { renderTasks(); renderTimeline(); }
+  closeModal();
+  showToast(task.done ? '🎉 Task complete!' : `Chunk done! ${task.chunks.length - task.chunksCompleted} left.`);
+}
+
+function toggleDone(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  task.done = !task.done;
+  if (task.done) task.chunksCompleted = task.chunks.length;
+  else task.chunksCompleted = 0;
+  if (fbConfigured) fbSaveTask(task); else renderTasks();
+}
+
+function deleteTask(taskId) {
+  if (fbConfigured) { fbDeleteTask(taskId); }
+  else { tasks = tasks.filter(t=>t.id!==taskId); renderTasks(); renderTimeline(); }
+  closeModal();
+  showToast('Task removed.');
+}
+
+// ── TIME HELPERS ──────────────────────────────────────────────
+function calcEndTime(task) {
+  const start = task.startTime || '09:00';
+  const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0) || 30;
+  const [h,m] = start.split(':').map(Number);
+  const endMin = h*60 + m + totalMin;
+  return `${String(Math.floor(endMin/60)%24).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}`;
+}
+
+function updateTaskTime(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  const st = document.getElementById('startTimeInput');
+  const et = document.getElementById('endTimeInput');
+  if (st) task.startTime = st.value;
+  if (et) task.endTime = et.value;
+  if (task.startTime) {
+    const fmt = t => {
+      const [h,m] = t.split(':').map(Number);
+      const ampm = h>=12?'PM':'AM';
+      const h12 = h%12||12;
+      return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    };
+    task.suggestedTimeBlock = `${fmt(task.startTime)} - ${fmt(task.endTime||calcEndTime(task))}`;
+  }
+  if (fbConfigured) fbSaveTask(task); else { renderTasks(); renderTimeline(); }
+}
+
+// ── QUICK ADD (with Claude validation) ───────────────────────
+let pendingQuickTask = null;
+
+async function quickAddTask() {
+  const input = document.getElementById('quickAddInput').value.trim();
+  if (!input) return;
+  const btn = document.getElementById('quickAddBtn');
+  btn.disabled = true;
+  btn.textContent = '…';
+  document.getElementById('inlineAnalysis').classList.remove('visible');
+
+  const systemPrompt = `You are a productivity AI for a senior Amazon PM. User typed a quick task.
+Validate and improve the task description, then return ONLY JSON:
+{
+  "title": "improved concise title max 12 words",
+  "urgencyScore": 7,
+  "importanceScore": 8,
+  "priorityScore": 8,
+  "chunks": [
+    {"title": "chunk title", "duration": 30, "description": "specific action to take"}
+  ],
+  "suggestedTimeBlock": "2:00 PM - 3:00 PM",
+  "note": "one sentence on why this priority"
+}
+Rules: 2-4 chunks of 20-90 min; clarify vague tasks into actionable steps; infer category from context.
+Calendar context: ${calendarContext || 'Standard 9-5 workday.'}`;
+
+  try {
+    if (!apiKey) throw new Error('no key');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:activeModel,max_tokens:700,system:systemPrompt,messages:[{role:'user',content:input}]})
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    const analysis = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    pendingQuickTask = { ...analysis, rawInput: input, category: currentCategory };
+    showInlineAnalysis(analysis);
+  } catch(e) {
+    // Demo fallback — still shows analysis panel
+    const demo = {
+      title: input.length > 60 ? input.substring(0,57)+'...' : input,
+      urgencyScore:6, importanceScore:7, priorityScore:7,
+      chunks:[
+        {title:'Plan & prepare', duration:20, description:'Gather context and outline approach'},
+        {title:'Execute', duration:30, description:input},
+        {title:'Review & close', duration:10, description:'Confirm completion and communicate'}
+      ],
+      suggestedTimeBlock:'Next available slot',
+      note: apiKey ? `API error: ${e.message}` : 'Demo mode — add API key in Settings for real AI validation.'
+    };
+    pendingQuickTask = { ...demo, rawInput: input, category: currentCategory };
+    showInlineAnalysis(demo);
+  }
+  btn.disabled = false;
+  btn.textContent = '+';
+}
+
+function showInlineAnalysis(a) {
+  document.getElementById('inlineTitle').textContent = a.title;
+  document.getElementById('inlineScores').innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red)">${a.urgencyScore}</div>
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Urgency</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--indigo)">${a.importanceScore}</div>
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Importance</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber)">${a.priorityScore}</div>
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
+    </div>`;
+  document.getElementById('inlineChunks').innerHTML = (a.chunks||[]).map((c,i) => `
+    <div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amber);min-width:18px">${i+1}</span>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--text)">${c.title}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">⏱ ${c.duration}m — ${c.description}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('inlineNote').textContent = a.note || '';
+  document.getElementById('inlineAnalysis').classList.add('visible');
+}
+
+function confirmQuickAdd() {
+  if (!pendingQuickTask) return;
+  const task = {
+    id: Date.now(),
+    title: pendingQuickTask.title,
+    rawInput: pendingQuickTask.rawInput,
+    category: pendingQuickTask.category || currentCategory || 'work',
+    urgencyScore: pendingQuickTask.urgencyScore||6,
+    importanceScore: pendingQuickTask.importanceScore||6,
+    priorityScore: pendingQuickTask.priorityScore||6,
+    chunks: pendingQuickTask.chunks||[],
+    suggestedTimeBlock: pendingQuickTask.suggestedTimeBlock||'',
+    note: pendingQuickTask.note||'',
+    startTime:'', endTime:'', done:false, chunksCompleted:0
+  };
+  if (fbConfigured) { fbSaveTask(task); }
+  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+  dismissInline();
+  showToast('✓ Task added to queue!');
+}
+
+function sendToBacklog() {
+  if (!pendingQuickTask) return;
+  const item = {
+    id: Date.now(),
+    title: pendingQuickTask.title,
+    rawInput: pendingQuickTask.rawInput,
+    category: pendingQuickTask.category || currentCategory || 'work',
+    priorityScore: pendingQuickTask.priorityScore||5,
+    chunks: pendingQuickTask.chunks||[],
+    note: pendingQuickTask.note||''
+  };
+  if (fbConfigured) { fbSaveBacklogItem(item); }
+  else { backlog.push(item); renderBacklog(); }
+  dismissInline();
+  showToast('→ Sent to backlog.');
+}
+
+function dismissInline() {
+  document.getElementById('inlineAnalysis').classList.remove('visible');
+  document.getElementById('quickAddInput').value = '';
+  pendingQuickTask = null;
+}
+
+// ── BACKLOG ───────────────────────────────────────────────────
+function addToBacklog() {
+  const input = document.getElementById('backlogInput').value.trim();
+  if (!input) return;
+  const item = { id: Date.now(), title: input, rawInput: input, category: 'work', priorityScore: 5, chunks: [], note: '' };
+  if (fbConfigured) { fbSaveBacklogItem(item); }
+  else { backlog.push(item); renderBacklog(); }
+  document.getElementById('backlogInput').value = '';
+  showToast('→ Added to backlog.');
+}
+
+function promoteToQueue(id) {
+  const item = backlog.find(b=>b.id===id);
+  if (!item) return;
+  const task = { ...item, urgencyScore: item.urgencyScore||5, importanceScore: item.importanceScore||5, startTime:'', endTime:'', done:false, chunksCompleted:0 };
+  if (fbConfigured) {
+    fbSaveTask(task);
+    fbDeleteBacklogItem(id);
+  } else {
+    tasks.push(task);
+    tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+    backlog = backlog.filter(b=>b.id!==id);
+    renderBacklog(); renderTasks(); renderTimeline();
+  }
+  showToast('✓ Promoted to priority queue!');
+  switchView('dashboard');
+}
+
+function removeFromBacklog(id) {
+  if (fbConfigured) { fbDeleteBacklogItem(id); }
+  else { backlog = backlog.filter(b=>b.id!==id); renderBacklog(); }
+}
+
+function renderBacklog() {
+  const container = document.getElementById('backlog-list');
+  const badge = document.getElementById('backlog-count-badge');
+  badge.textContent = backlog.length + ' item' + (backlog.length!==1?'s':'');
+
+  if (!backlog.length) {
+    container.innerHTML = `<div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <p>Backlog is empty.<br>Stack ideas here — promote to queue when ready.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = backlog.map(item => {
+    const catBadge = item.category==='work'?'indigo':item.category==='personal'?'teal':item.category==='health'?'green':'amber';
+    const totalMin = (item.chunks||[]).reduce((s,c)=>s+c.duration,0);
+    return `
+      <div class="backlog-item ${item.category}">
+        <div class="backlog-item-body">
+          <div class="backlog-item-title">${item.title}</div>
+          <div class="backlog-item-meta">
+            <span class="badge badge-${catBadge}">${item.category}</span>
+            ${totalMin>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">⏱ ${totalMin}m</span>`:''}
+            ${item.priorityScore?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">P${item.priorityScore}</span>`:''}
+          </div>
+          ${item.note?`<div style="font-size:11px;color:var(--text-muted);margin-top:4px;font-style:italic;line-height:1.4">${item.note}</div>`:''}
+        </div>
+        <div class="backlog-actions">
+          <button class="promote-btn" onclick="promoteToQueue(${item.id})">→ Queue</button>
+          <button class="drop-btn" onclick="removeFromBacklog(${item.id})">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── TIMELINE ──────────────────────────────────────────────────
+function renderTimeline() {
+  const container = document.getElementById('timeline');
+  const now = new Date();
+  const currentHour = now.getHours();
+  const hours = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+
+  container.innerHTML = hours.map(hour => {
+    const isCurrent = hour === currentHour;
+    const label = hour===0?'12 AM':hour<12?`${hour} AM`:hour===12?'12 PM':`${hour-12} PM`;
+    const tasksHere = tasks.filter(t => {
+      // Prefer explicit startTime (24h), fall back to suggestedTimeBlock string
+      if (t.startTime) {
+        const h = parseInt(t.startTime.split(':')[0]);
+        return h === hour;
+      }
+      const tb = t.suggestedTimeBlock||'';
+      const m = tb.match(/(\d+):\d+\s*(AM|PM)/i);
+      if (!m) return false;
+      let h = parseInt(m[1]);
+      const pm = m[2].toUpperCase()==='PM';
+      if (pm && h!==12) h+=12;
+      if (!pm && h===12) h=0;
+      return h===hour;
+    });
+    const blocksHtml = tasksHere.map(t=>`
+      <div class="timeline-block ${t.category}" onclick="openTask(${t.id})" style="cursor:pointer">
+        <div class="timeline-block-title">${t.title}</div>
+        <div class="timeline-block-dur">⏱ ${t.chunks.reduce((s,c)=>s+c.duration,0)}m · P${t.priorityScore}</div>
+      </div>`).join('');
+
+    return `<div class="timeline-slot ${isCurrent?'current':''}" data-time="${label}">
+      ${blocksHtml || (isCurrent?`<div style="font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;padding:4px 0">← Now</div>`:`<div style="height:22px"></div>`)}
+    </div>`;
+  }).join('');
+}
+
+// ── ICS EXPORT ────────────────────────────────────────────────
+function exportICS() {
+  const work = tasks.filter(t=>t.category==='work');
+  if (!work.length) { showToast('No work tasks to export.'); return; }
+  exportTasksAsICS(work, 'mission-os-work.ics');
+}
+
+function exportSingleTask(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  exportTasksAsICS([task], `${task.title.replace(/[^a-z0-9]/gi,'-')}.ics`);
+  showToast('ICS downloaded — import into Outlook.');
+}
+
+function exportTasksAsICS(taskList, filename='mission-os.ics') {
+  const now = new Date();
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mission OS//EN','CALSCALE:GREGORIAN'];
+  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  taskList.forEach(task => {
+    const start = new Date(now); start.setHours(9,0,0,0);
+    const mins = task.chunks.reduce((s,c)=>s+c.duration,0)||30;
+    const end = new Date(start.getTime()+mins*60000);
+    lines.push('BEGIN:VEVENT',`UID:${task.id}@mission-os`,`DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,
+      `SUMMARY:${task.title}`,`DESCRIPTION:Priority: ${task.priorityScore}/10\\n${task.note||''}\\nChunks: ${task.chunks.map(c=>c.title).join(', ')}`,
+      'END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')],{type:'text/calendar'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function exportAllJSON() {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mission-os-backup.json';
+  a.click();
+  showToast('Tasks exported as JSON.');
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+function updateStats() {
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.done).length;
+  const hours = (tasks.reduce((s,t)=>s+t.chunks.reduce((cs,c)=>cs+c.duration,0),0)/60).toFixed(1);
+  document.getElementById('stat-tasks').textContent = total;
+  document.getElementById('stat-hours').textContent = hours+'h';
+  document.getElementById('stat-done').textContent = total>0?Math.round(done/total*100)+'%':'0%';
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function saveApiKey() {
+  apiKey = document.getElementById('apiKeyInput').value.trim();
+  activeModel = document.getElementById('modelSelect').value;
+  if (apiKey) localStorage.setItem('claudeApiKey', apiKey);
+  else localStorage.removeItem('claudeApiKey');
+  localStorage.setItem('claudeModel', activeModel);
+  showToast(apiKey ? '✓ API key saved permanently on this device.' : 'API key cleared.');
+}
+
+function loadSavedSettings() {
+  const savedKey = localStorage.getItem('claudeApiKey');
+  const savedModel = localStorage.getItem('claudeModel');
+  if (savedKey) {
+    apiKey = savedKey;
+    const el = document.getElementById('apiKeyInput');
+    if (el) el.value = savedKey;
+  }
+  if (savedModel) {
+    activeModel = savedModel;
+    const el = document.getElementById('modelSelect');
+    if (el) el.value = savedModel;
+  }
+}
+
+function clearAllTasks() {
+  if (!tasks.length) { showToast('No tasks to clear.'); return; }
+  if (!confirm('Clear all tasks? This cannot be undone.')) return;
+  if (fbConfigured) {
+    tasks.forEach(t => fbDeleteTask(t.id));
+  } else {
+    tasks = [];
+    renderTasks();
+    renderTimeline();
+  }
+  showToast('All tasks cleared.');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'), 2600);
+}
+
+// ── SEED DEMO DATA ────────────────────────────────────────────
+function seedDemo() {
+  tasks = [
+    {
+      id: 1, title: 'Send May 13 Demo Alignment Email', rawInput: '', category: 'work',
+      urgencyScore: 9, importanceScore: 8, priorityScore: 9,
+      chunks: [
+        {title:'Draft email with scope + milestone 3 context', duration:20, description:'Cover demo date, India-friendly time, scope from M3 acceptance doc'},
+        {title:'Prep scenario crowdsource doc', duration:15, description:'Create shared doc for teams to fill in demo scenarios'},
+        {title:'Include backup plan + two mock dates', duration:10, description:'Add contingency plan and two mock schedule options'},
+        {title:'Send and confirm Toshiba attendance', duration:5, description:'Send to distribution list and confirm receipt'}
+      ],
+      suggestedTimeBlock:'6:00 PM - 7:00 PM', note:'High urgency — demo May 13, alignment needed now to avoid last-minute scramble.', done:false, chunksCompleted:0
+    },
+    {
+      id: 2, title: 'Review Toshiba Gap Costs with Team', rawInput: '', category: 'work',
+      urgencyScore: 8, importanceScore: 9, priorityScore: 9,
+      chunks: [
+        {title:'Prep gap list with build-vs-buy flags', duration:30, description:'Annotate Toshiba dollar values with internal build option and cost estimate'},
+        {title:'Flag items OK to push to 2027', duration:20, description:'Based on Joe\'s EOY 2026 deadline, identify what can shift to 2027'},
+        {title:'Run stakeholder review meeting', duration:60, description:'Walk through gaps, document decisions, capture commitments'}
+      ],
+      suggestedTimeBlock:'10:00 AM - 12:00 PM', note:'Strategic — locking gap decisions drives the 2026 delivery plan. Joe\'s EOY deadline is firm.', done:false, chunksCompleted:0
+    },
+    {
+      id: 3, title: 'Rewrite TODS Document', rawInput: '', category: 'work',
+      urgencyScore: 6, importanceScore: 8, priorityScore: 7,
+      chunks: [
+        {title:'Audit current doc vs Bar Raiser checklist', duration:30, description:'Identify every gap — purpose, customer impact, counterarguments, acronyms'},
+        {title:'Rewrite core sections with BLUF structure', duration:60, description:'Lead with bottom line, bridge sections, active voice, sub-25-word sentences'},
+        {title:'Final QA and send', duration:20, description:'Run full Doc QA checklist, then distribute'}
+      ],
+      suggestedTimeBlock:'2:00 PM - 4:00 PM', note:'Important but not today-urgent — target EOW completion.', done:false, chunksCompleted:0
+    },
+    {
+      id: 4, title: 'Interview Prep: System Design', rawInput: '', category: 'interview',
+      urgencyScore: 5, importanceScore: 9, priorityScore: 7,
+      chunks: [
+        {title:'Review distributed systems fundamentals', duration:45, description:'Scaling, consistency models, load balancing, CAP theorem'},
+        {title:'Mock system design problem', duration:45, description:'End-to-end walkthrough — scope, components, tradeoffs, capacity'}
+      ],
+      suggestedTimeBlock:'7:00 PM - 8:30 PM', note:'Long game — consistent daily prep is the path to $400K+ by EOY.', done:false, chunksCompleted:0
+    },
+    {
+      id: 5, title: 'Morning Run + Hip Mobility', rawInput: '', category: 'health',
+      urgencyScore: 6, importanceScore: 8, priorityScore: 7,
+      chunks: [
+        {title:'Hip and glute warm-up', duration:10, description:'90/90 hip stretch, glute bridges, leg swings — focus on tightness'},
+        {title:'Run — 4km with form focus', duration:35, description:'Core engaged, glutes driving, cadence over 170 spm'},
+        {title:'Cool-down stretch', duration:10, description:'Hamstring and hip flexor stretch, 2 min each side'}
+      ],
+      suggestedTimeBlock:'6:00 AM - 7:00 AM', note:'Health is the foundation. Sleep, movement, and mental sharpness compound.', done:false, chunksCompleted:0
+    }
+  ];
+  backlog = [
+    { id: 101, title: 'Set up Google Calendar sync for Mission OS', rawInput:'', category:'personal', priorityScore:5, chunks:[], note:'Future enhancement — wire up Calendar API for real-time block detection.' },
+    { id: 102, title: 'Research $400K+ roles at Amazon, Google, and startups', rawInput:'', category:'interview', priorityScore:6, chunks:[{title:'Identify target companies',duration:45,description:'Find 10 roles matching TPM/PM background at target comp'},{title:'Map skill gaps',duration:30,description:'Compare JD requirements to current skills'}], note:'Foundational step for salary goal — do before interview prep accelerates.' },
+    { id: 103, title: 'Explore Firestore for persistent task storage', rawInput:'', category:'personal', priorityScore:4, chunks:[], note:'Replaces in-memory state so data survives page refresh.' }
+  ];
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
