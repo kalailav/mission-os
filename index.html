@@ -534,7 +534,33 @@
     .lock-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.6; }
     .lock-mode-toggle { background: none; border: none; color: var(--teal); font-size: 12px; cursor: pointer; margin-top: 10px; text-align: center; width: 100%; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
 
-    /* ── INTERACTIVE CALENDAR ── */
+    /* ── GOALS ── */
+    .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+    .goal-card-header { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+    .goal-card-header:hover { background: var(--surface2); }
+    .goal-title-wrap { flex: 1; min-width: 0; }
+    .goal-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 0.5px; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
+    .goal-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .goal-progress-ring { flex-shrink: 0; }
+    .goal-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border-light); }
+    .goal-body.open { display: block; }
+    .goal-summary { font-size: 12px; color: var(--text-muted); line-height: 1.6; padding: 10px 0 14px; font-style: italic; border-bottom: 1px solid var(--border-light); margin-bottom: 14px; }
+    .milestone-block { margin-bottom: 14px; }
+    .milestone-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; }
+    .milestone-num { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--amber); line-height: 1; min-width: 24px; }
+    .milestone-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .milestone-progress { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); }
+    .milestone-tasks { padding-left: 34px; display: flex; flex-direction: column; gap: 6px; }
+    .milestone-task { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .milestone-task.done { opacity: 0.45; }
+    .milestone-task-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .milestone-task-check.done { background: var(--green); border-color: var(--green); }
+    .milestone-task-body { flex: 1; min-width: 0; }
+    .milestone-task-title { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .milestone-task-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+    .goal-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .progress-bar-wrap { background: var(--surface3); border-radius: 4px; height: 6px; margin: 10px 0 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width 0.5s ease; }
     .cal-interactive-slots { position: relative; cursor: crosshair; }
     .cal-hover-line { position: absolute; left: 0; right: 0; height: 2px; background: rgba(245,158,11,0.4); pointer-events: none; z-index: 4; display: none; }
     .cal-hover-label { position: absolute; left: 4px; background: var(--amber); color: #000; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; pointer-events: none; z-index: 5; display: none; }
@@ -692,6 +718,10 @@
   <button class="sidebar-nav-btn" id="snav-calendar" onclick="switchView('calendar')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
     Calendar
+  </button>
+  <button class="sidebar-nav-btn" id="snav-goals" onclick="switchView('goals')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Goals
   </button>
   <button class="sidebar-nav-btn" id="snav-backlog" onclick="switchView('backlog')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -974,6 +1004,42 @@
     </div>
   </div>
 
+  <!-- ── GOALS ── -->
+  <div id="view-goals" class="view">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Goals</span>
+      <span class="badge badge-amber" id="goals-count-badge">0 goals</span>
+    </div>
+
+    <!-- Goal Input Card -->
+    <div class="capture-card" id="goalInputCard">
+      <div class="capture-label">⚡ Define a Goal</div>
+      <input type="text" id="goalTitle" placeholder="e.g. Get a $400K PM role by end of 2026" style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Current Progress / What you've done so far</div>
+      <textarea id="goalProgress" rows="3" placeholder="e.g. I've updated my resume, applied to 3 companies, and completed 2 mock interviews..."></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <select id="goalCategory" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;outline:none">
+          <option value="work">💼 Work</option>
+          <option value="interview">🎯 Interview / Career</option>
+          <option value="health">💪 Health</option>
+          <option value="personal">🏠 Personal</option>
+        </select>
+        <button class="primary-btn" style="flex:2" onclick="analyzeGoal()" id="analyzeGoalBtn">✦ Break Down with Claude</button>
+      </div>
+      <div id="goalLoadingIndicator" style="display:none">
+        <div class="loading-indicator"><div class="spinner"></div>Claude is building your roadmap...</div>
+      </div>
+    </div>
+
+    <!-- Goals List -->
+    <div id="goals-list">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <p>No goals yet.<br>Add a high-level goal above and Claude will build your roadmap.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ── BACKLOG ── -->
   <div id="view-backlog" class="view">
     <div class="section-header" style="margin-bottom:16px">
@@ -1072,6 +1138,10 @@
   <button class="nav-btn" id="nav-calendar" onclick="switchView('calendar')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
     Calendar
+  </button>
+  <button class="nav-btn" id="nav-goals" onclick="switchView('goals')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Goals
   </button>
   <button class="nav-btn" id="nav-backlog" onclick="switchView('backlog')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -1398,6 +1468,7 @@ function init() {
   const d = new Date();
   document.getElementById('currentDate').textContent =
     d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+  loadGoals();
   loadSavedSettings();
   checkVaultExists();
 }
@@ -1495,6 +1566,7 @@ function switchView(view) {
   if (sb) sb.classList.add('active');
   if (view === 'calendar') { renderCalendar2(); setTimeout(scrollCalToNow, 100); }
   if (view === 'timeline') renderTimeline();
+  if (view === 'goals') renderGoals();
 }
 
 // ── FILTER ───────────────────────────────────────────────────
@@ -2145,7 +2217,247 @@ function renderBacklog() {
   }).join('');
 }
 
-// ── INTERACTIVE CALENDAR ──────────────────────────────────────
+// ── GOALS ─────────────────────────────────────────────────────
+let goals = [];
+
+async function analyzeGoal() {
+  const title    = document.getElementById('goalTitle').value.trim();
+  const progress = document.getElementById('goalProgress').value.trim();
+  const category = document.getElementById('goalCategory').value;
+  if (!title) { showToast('Enter a goal first.'); return; }
+
+  const btn = document.getElementById('analyzeGoalBtn');
+  btn.disabled = true;
+  document.getElementById('goalLoadingIndicator').style.display = 'block';
+
+  const systemPrompt = `You are a world-class productivity coach and project manager. A user gives you a high-level goal and their current progress.
+
+Your job:
+1. Break the goal into 3-6 logical milestones in sequential order
+2. Break each milestone into 2-5 specific, actionable tasks
+3. Evaluate current progress to estimate completion percentage (0-100)
+4. Write a brief, honest progress summary (2-3 sentences)
+
+Return ONLY a valid JSON object with this exact structure, no other text:
+{
+  "goal": "the goal as stated",
+  "category": "${category}",
+  "progressPercent": 15,
+  "progressSummary": "Brief honest assessment of where they stand and what's next.",
+  "milestones": [
+    {
+      "id": 1,
+      "title": "Milestone title",
+      "description": "What achieving this milestone means",
+      "tasks": [
+        {
+          "id": "1-1",
+          "title": "Specific task title",
+          "description": "Concrete action to take",
+          "estimatedMinutes": 45,
+          "done": false
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Tasks must be concrete and actionable (start with a verb)
+- Milestones must be sequential — completing them in order achieves the goal
+- progressPercent should reflect honest assessment of current status
+- estimatedMinutes should be realistic (15-480)`;
+
+  try {
+    let result;
+    if (!apiKey) throw new Error('no key');
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: activeModel, max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `Goal: ${title}\n\nCurrent progress: ${progress || 'Just starting, no progress yet.'}` }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+
+    // Add metadata
+    result.id = Date.now();
+    result.createdAt = new Date().toISOString();
+    result.expanded = true;
+    goals.unshift(result);
+    saveGoals();
+    renderGoals();
+
+    // Clear inputs
+    document.getElementById('goalTitle').value = '';
+    document.getElementById('goalProgress').value = '';
+    showToast('✦ Goal roadmap created!');
+
+  } catch(e) {
+    if (!apiKey) {
+      showToast('Add your Claude API key in Settings to use Goals.');
+    } else {
+      showToast('Error: ' + e.message);
+    }
+  }
+
+  btn.disabled = false;
+  document.getElementById('goalLoadingIndicator').style.display = 'none';
+}
+
+function toggleGoal(id) {
+  const goal = goals.find(g=>g.id===id);
+  if (goal) { goal.expanded = !goal.expanded; renderGoals(); }
+}
+
+function toggleMilestoneTask(goalId, taskId) {
+  const goal = goals.find(g=>g.id===goalId);
+  if (!goal) return;
+  goal.milestones.forEach(m => {
+    const task = m.tasks.find(t=>t.id===taskId);
+    if (task) task.done = !task.done;
+  });
+  // Recalc progress
+  const allTasks = goal.milestones.flatMap(m=>m.tasks);
+  const doneTasks = allTasks.filter(t=>t.done).length;
+  goal.progressPercent = allTasks.length ? Math.round(doneTasks/allTasks.length*100) : 0;
+  goal.progressSummary = `${doneTasks} of ${allTasks.length} tasks completed (${goal.progressPercent}% done).`;
+  saveGoals();
+  renderGoals();
+}
+
+function addGoalTasksToQueue(goalId, milestoneIdx) {
+  const goal = goals.find(g=>g.id===goalId);
+  if (!goal) return;
+  const milestone = goal.milestones[milestoneIdx];
+  if (!milestone) return;
+  const pending = milestone.tasks.filter(t=>!t.done);
+  pending.forEach(t => {
+    const task = {
+      id: Date.now() + Math.random(),
+      title: t.title,
+      rawInput: t.description,
+      category: goal.category || 'work',
+      urgencyScore: 6, importanceScore: 8, priorityScore: 7,
+      chunks: [{ title: t.title, duration: t.estimatedMinutes||30, description: t.description }],
+      suggestedTimeBlock: '', startTime: '', endTime: '',
+      note: `From goal: ${goal.goal} → ${milestone.title}`,
+      userNotes: '', done: false, chunksCompleted: 0
+    };
+    if (gasConfigured) gasSaveTask(task);
+    else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); }
+  });
+  if (!gasConfigured) renderTasks();
+  showToast(`✓ ${pending.length} tasks added to queue!`);
+}
+
+function deleteGoal(id) {
+  if (!confirm('Delete this goal and its roadmap?')) return;
+  goals = goals.filter(g=>g.id!==id);
+  saveGoals();
+  renderGoals();
+  showToast('Goal deleted.');
+}
+
+function saveGoals() {
+  try { localStorage.setItem('missionGoals', JSON.stringify(goals)); } catch(e) {}
+}
+
+function loadGoals() {
+  try {
+    const saved = localStorage.getItem('missionGoals');
+    if (saved) goals = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function renderGoals() {
+  const container = document.getElementById('goals-list');
+  const badge = document.getElementById('goals-count-badge');
+  if (!container) return;
+  badge.textContent = goals.length + ' goal' + (goals.length!==1?'s':'');
+
+  if (!goals.length) {
+    container.innerHTML = `<div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <p>No goals yet.<br>Add a high-level goal above and Claude will build your roadmap.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = goals.map(goal => {
+    const catBadge = goal.category==='work'?'indigo':goal.category==='personal'?'teal':goal.category==='health'?'green':'amber';
+    const allTasks = (goal.milestones||[]).flatMap(m=>m.tasks||[]);
+    const doneTasks = allTasks.filter(t=>t.done).length;
+    const pct = goal.progressPercent || 0;
+
+    const milestonesHtml = (goal.milestones||[]).map((m, mi) => {
+      const mDone = (m.tasks||[]).filter(t=>t.done).length;
+      const mTotal = (m.tasks||[]).length;
+      const tasksHtml = (m.tasks||[]).map(t => `
+        <div class="milestone-task ${t.done?'done':''}">
+          <div class="milestone-task-check ${t.done?'done':''}" onclick="toggleMilestoneTask(${goal.id},'${t.id}')">
+            ${t.done?`<svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`:''}
+          </div>
+          <div class="milestone-task-body">
+            <div class="milestone-task-title" style="${t.done?'text-decoration:line-through':''}">${t.title}</div>
+            <div class="milestone-task-desc">${t.description} ${t.estimatedMinutes?`· ⏱ ${t.estimatedMinutes}m`:''}</div>
+          </div>
+        </div>`).join('');
+
+      return `<div class="milestone-block">
+        <div class="milestone-header">
+          <div class="milestone-num">${mi+1}</div>
+          <div class="milestone-title">${m.title}</div>
+          <div class="milestone-progress">${mDone}/${mTotal}</div>
+          <button onclick="addGoalTasksToQueue(${goal.id},${mi})" style="padding:4px 10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:12px;color:var(--amber);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">→ Queue</button>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${mTotal?Math.round(mDone/mTotal*100):0}%"></div></div>
+        <div class="milestone-tasks">${tasksHtml}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="goal-card">
+      <div class="goal-card-header" onclick="toggleGoal(${goal.id})">
+        <div class="goal-title-wrap">
+          <div class="goal-title">${goal.goal}</div>
+          <div class="goal-meta">
+            <span class="badge badge-${catBadge}">${goal.category}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">${doneTasks}/${allTasks.length} tasks</span>
+          </div>
+          <div class="progress-bar-wrap" style="margin-top:8px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);margin-top:3px">${pct}% complete</div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--text-muted)'};line-height:1">${pct}%</div>
+      </div>
+      <div class="goal-body ${goal.expanded?'open':''}">
+        ${goal.progressSummary?`<div class="goal-summary">"${goal.progressSummary}"</div>`:''}
+        ${milestonesHtml}
+        <div class="goal-actions">
+          <button onclick="addGoalTasksToQueue(${goal.id},-1)" style="flex:1;padding:9px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius-sm);color:var(--indigo);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">→ Add All Pending to Queue</button>
+          <button onclick="deleteGoal(${goal.id})" style="padding:9px 14px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Fix addGoalTasksToQueue for milestoneIdx === -1 (all milestones)
+const _origAddGoalTasksToQueue = addGoalTasksToQueue;
+window.addGoalTasksToQueue = function(goalId, milestoneIdx) {
+  if (milestoneIdx === -1) {
+    const goal = goals.find(g=>g.id===goalId);
+    if (!goal) return;
+    let added = 0;
+    goal.milestones.forEach((m, i) => { _origAddGoalTasksToQueue(goalId, i); added++; });
+    return;
+  }
+  _origAddGoalTasksToQueue(goalId, milestoneIdx);
+};
 let calView = 'day';
 let calDate = new Date();
 let calDragStart = null;
