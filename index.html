@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Mission OS</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --bg: #080A0F;
@@ -420,9 +418,151 @@
       padding: 0 15px; flex-shrink: 0; transition: all 0.15s;
     }
     .backlog-add-btn:hover { background: rgba(13,148,136,0.25); }
+
+    /* ── LOCK SCREEN ── */
+    .lock-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; }
+    .lock-overlay.hidden { display: none; }
+    .lock-logo { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 6px; color: var(--amber); margin-bottom: 4px; }
+    .lock-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 40px; }
+    .lock-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 340px; }
+    .lock-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .lock-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 13px 14px; outline: none; transition: border-color 0.2s; margin-bottom: 12px; }
+    .lock-input:focus { border-color: var(--amber); }
+    .lock-input::placeholder { color: var(--text-dim); }
+    .lock-btn { width: 100%; padding: 13px; background: var(--amber); color: #000; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .lock-btn:hover { background: #d68e00; }
+    .lock-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .lock-error { font-size: 12px; color: var(--red); text-align: center; margin-top: 10px; min-height: 18px; }
+    .lock-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.6; }
+    .lock-mode-toggle { background: none; border: none; color: var(--teal); font-size: 12px; cursor: pointer; margin-top: 10px; text-align: center; width: 100%; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
+
+    /* ── PIN PAD ── */
+    .pin-dots { display: flex; justify-content: center; gap: 14px; margin: 20px 0 24px; }
+    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
+    .pin-dot.filled { background: var(--amber); border-color: var(--amber); }
+    .pin-dot.error { background: var(--red); border-color: var(--red); animation: shake 0.3s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+    .pin-key {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 10px; font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 500;
+      color: var(--text); cursor: pointer; text-align: center; transition: all 0.12s;
+      user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .pin-key:active, .pin-key.pressed { background: var(--surface3); transform: scale(0.94); }
+    .pin-key.delete { font-size: 16px; color: var(--text-muted); }
+    .pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
   </style>
+
+
 </head>
 <body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-logo">MISSION OS</div>
+  <div class="lock-sub">Personal Life OS</div>
+  <div class="lock-card">
+
+    <!-- UNLOCK MODE -->
+    <div id="lockUnlockMode">
+      <!-- PIN pad — shown on mobile -->
+      <div id="pinUnlock">
+        <div style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:4px">Enter your 4-digit PIN</div>
+        <div class="pin-dots">
+          <div class="pin-dot" id="dot0"></div>
+          <div class="pin-dot" id="dot1"></div>
+          <div class="pin-dot" id="dot2"></div>
+          <div class="pin-dot" id="dot3"></div>
+        </div>
+        <div class="pin-pad">
+          <button class="pin-key" onclick="pinKey('1')">1</button>
+          <button class="pin-key" onclick="pinKey('2')">2</button>
+          <button class="pin-key" onclick="pinKey('3')">3</button>
+          <button class="pin-key" onclick="pinKey('4')">4</button>
+          <button class="pin-key" onclick="pinKey('5')">5</button>
+          <button class="pin-key" onclick="pinKey('6')">6</button>
+          <button class="pin-key" onclick="pinKey('7')">7</button>
+          <button class="pin-key" onclick="pinKey('8')">8</button>
+          <button class="pin-key" onclick="pinKey('9')">9</button>
+          <button class="pin-key empty"></button>
+          <button class="pin-key" onclick="pinKey('0')">0</button>
+          <button class="pin-key delete" onclick="pinDelete()">⌫</button>
+        </div>
+        <button class="lock-mode-toggle" onclick="toggleUnlockMode()">Use password instead</button>
+      </div>
+      <!-- Password — shown on desktop -->
+      <div id="passwordUnlock" style="display:none">
+        <div style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:12px">Enter your password</div>
+        <input class="lock-input" type="password" id="lockPassword" placeholder="Your password..." onkeydown="if(event.key==='Enter')unlockWithPass()">
+        <button class="lock-btn" onclick="unlockWithPass()" id="unlockBtn">🔓 Unlock</button>
+        <button class="lock-mode-toggle" style="margin-top:10px" onclick="toggleUnlockMode()">Use PIN instead</button>
+      </div>
+      <div class="lock-error" id="unlockError"></div>
+      <button class="lock-mode-toggle" onclick="showSetupMode()" style="margin-top:6px;color:var(--text-dim)">First time? Set up PIN & keys</button>
+    </div>
+
+    <!-- SETUP MODE -->
+    <div id="lockSetupMode" style="display:none">
+      <div id="setupStep1">
+        <div style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:4px">Choose a 4-digit PIN</div>
+        <div class="pin-dots">
+          <div class="pin-dot" id="sdot0"></div>
+          <div class="pin-dot" id="sdot1"></div>
+          <div class="pin-dot" id="sdot2"></div>
+          <div class="pin-dot" id="sdot3"></div>
+        </div>
+        <div class="pin-pad">
+          <button class="pin-key" onclick="setupPinKey('1')">1</button>
+          <button class="pin-key" onclick="setupPinKey('2')">2</button>
+          <button class="pin-key" onclick="setupPinKey('3')">3</button>
+          <button class="pin-key" onclick="setupPinKey('4')">4</button>
+          <button class="pin-key" onclick="setupPinKey('5')">5</button>
+          <button class="pin-key" onclick="setupPinKey('6')">6</button>
+          <button class="pin-key" onclick="setupPinKey('7')">7</button>
+          <button class="pin-key" onclick="setupPinKey('8')">8</button>
+          <button class="pin-key" onclick="setupPinKey('9')">9</button>
+          <button class="pin-key empty"></button>
+          <button class="pin-key" onclick="setupPinKey('0')">0</button>
+          <button class="pin-key delete" onclick="setupPinDelete()">⌫</button>
+        </div>
+      </div>
+      <div id="setupStep2" style="display:none">
+        <div style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:4px">Confirm your PIN</div>
+        <div class="pin-dots">
+          <div class="pin-dot" id="cdot0"></div>
+          <div class="pin-dot" id="cdot1"></div>
+          <div class="pin-dot" id="cdot2"></div>
+          <div class="pin-dot" id="cdot3"></div>
+        </div>
+        <div class="pin-pad">
+          <button class="pin-key" onclick="confirmPinKey('1')">1</button>
+          <button class="pin-key" onclick="confirmPinKey('2')">2</button>
+          <button class="pin-key" onclick="confirmPinKey('3')">3</button>
+          <button class="pin-key" onclick="confirmPinKey('4')">4</button>
+          <button class="pin-key" onclick="confirmPinKey('5')">5</button>
+          <button class="pin-key" onclick="confirmPinKey('6')">6</button>
+          <button class="pin-key" onclick="confirmPinKey('7')">7</button>
+          <button class="pin-key" onclick="confirmPinKey('8')">8</button>
+          <button class="pin-key" onclick="confirmPinKey('9')">9</button>
+          <button class="pin-key empty"></button>
+          <button class="pin-key" onclick="confirmPinKey('0')">0</button>
+          <button class="pin-key delete" onclick="confirmPinDelete()">⌫</button>
+        </div>
+      </div>
+      <div id="setupStep3" style="display:none">
+        <div class="lock-label">Claude API Key</div>
+        <input class="lock-input" type="password" id="lockApiKey" placeholder="sk-ant-...">
+        <div class="lock-label">Google Sheets URL (optional — add after setup)</div>
+        <input class="lock-input" type="text" id="lockGasUrl" placeholder="https://script.google.com/macros/s/...">
+        <button class="lock-btn" onclick="finishSetup()">🔐 Encrypt & Save</button>
+        <div class="lock-hint">Encrypted with AES-256. PIN on mobile, password on desktop.</div>
+      </div>
+      <div class="lock-error" id="setupError"></div>
+    </div>
+
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -435,6 +575,9 @@
       </button>
       <button class="icon-btn" onclick="switchView('settings')" title="Settings">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="lockApp()" title="Lock">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </button>
     </div>
   </div>
@@ -618,27 +761,21 @@
   <!-- ── SETTINGS ── -->
   <div id="view-settings" class="view">
     <div class="settings-section">
-      <div class="settings-title">🔥 Firebase Database</div>
+      <div class="settings-title">🔗 Google Sheets Sync</div>
       <div class="settings-row">
-        <label>Firebase Config (paste JSON from Firebase Console)</label>
-        <textarea id="firebaseConfigInput" rows="6" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "projectId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "...",
-  "appId": "..."
-}'></textarea>
-        <button class="primary-btn" style="margin-top:10px" onclick="connectFirebase()">🔥 Connect & Sync</button>
-        <div id="firebaseStatus" style="font-size:11px;margin-top:8px;padding:6px 10px;border-radius:6px;display:none"></div>
+        <label>Apps Script Web App URL</label>
+        <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..." style="font-size:12px"/>
+        <button class="primary-btn" style="margin-top:10px" onclick="connectGASFromSettings()">🔗 Connect & Sync</button>
+        <button class="action-btn action-btn-secondary" style="width:100%;margin-top:8px;padding:10px" onclick="testGAS()">🧪 Test Connection</button>
+        <div id="gasStatus" style="font-size:11px;margin-top:8px;padding:6px 10px;border-radius:6px;display:none"></div>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.7;padding:0 2px">
-        Free setup — takes 3 minutes:<br>
-        1. Go to <strong>console.firebase.google.com</strong><br>
-        2. Create project → Add web app → Copy config<br>
-        3. Enable <strong>Firestore Database</strong> in test mode<br>
-        4. Paste config above and tap Connect<br><br>
-        Once connected, all tasks sync instantly across your phone and desktop.
+        Free setup — 5 minutes:<br>
+        1. Go to <strong>script.google.com</strong> → New project<br>
+        2. Paste the Apps Script code Claude gave you<br>
+        3. Click <strong>Deploy → New deployment → Web app</strong><br>
+        4. Execute as: <strong>Me</strong> · Access: <strong>Anyone</strong><br>
+        5. Copy the Web App URL and paste above
       </div>
     </div>
       <div class="settings-row">
@@ -731,136 +868,291 @@ let isRecording = false;
 let calendarContext = '';
 let pendingAnalysis = null;
 
-// ── FIREBASE STATE ────────────────────────────────────────────
-let db = null;
-let fbConfigured = false;
-let unsubTasks = null;
-let unsubBacklog = null;
+// ── GAS SYNC STATE ───────────────────────────────────────────
+let gasUrl = '';
+let gasConfigured = false;
+let syncInterval = null;
 
-// ── FIREBASE ──────────────────────────────────────────────────
-function connectFirebase() {
-  let raw = document.getElementById('firebaseConfigInput').value.trim();
-  const statusEl = document.getElementById('firebaseStatus');
-  if (!raw) { showToast('Paste your Firebase config first.'); return; }
-  try {
-    // Strip const/var/let assignment and semicolons
-    raw = raw.replace(/^[\s\S]*?=\s*/, '').replace(/;[\s]*$/, '').trim();
-    // Strip wrapping () if present
-    if (raw.startsWith('(')) raw = raw.slice(1, -1).trim();
-    // Add quotes around unquoted keys
-    raw = raw.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
-    // Clean up markdown link format [text](url) → just the url
-    raw = raw.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$2');
-    const config = JSON.parse(raw);
-    if (firebase.apps.length) {
-      firebase.app().delete().then(() => initFB(config, statusEl));
-    } else {
-      initFB(config, statusEl);
-    }
-  } catch(e) {
-    statusEl.style.display = 'block';
-    statusEl.style.background = 'rgba(239,68,68,0.1)';
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '✕ Parse error: ' + e.message;
-  }
+// ── GAS SYNC FUNCTIONS ────────────────────────────────────────
+async function gasGet(action) {
+  const url = `${gasUrl}?action=${action}&t=${Date.now()}`;
+  const res = await fetch(url, { redirect: 'follow' });
+  const text = await res.text();
+  return JSON.parse(text);
 }
 
-function initFB(config, statusEl) {
+async function gasPost(body) {
+  // Apps Script doesn't support CORS for POST from file:// or cross-origin
+  // Use GET with encoded payload as workaround
+  const encoded = encodeURIComponent(JSON.stringify(body));
+  const url = `${gasUrl}?payload=${encoded}&t=${Date.now()}`;
+  const res = await fetch(url, { redirect: 'follow' });
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
+async function gasSaveTask(task) {
+  if (!gasConfigured) return;
   try {
-    firebase.initializeApp(config);
-    db = firebase.firestore();
-    fbConfigured = true;
-    // Save config key to session
-    sessionStorage.setItem('fbConfig', JSON.stringify(config));
-    localStorage.setItem('fbConfig', JSON.stringify(config));
-    statusEl.style.display = 'block';
+    await gasPost({ action: 'saveTask', data: task });
+  } catch(e) { console.error('GAS save task error:', e); }
+}
+
+async function gasDeleteTask(id) {
+  if (!gasConfigured) return;
+  try {
+    await gasPost({ action: 'deleteTask', id });
+  } catch(e) { console.error('GAS delete task error:', e); }
+}
+
+async function gasSaveBacklog(item) {
+  if (!gasConfigured) return;
+  try {
+    await gasPost({ action: 'saveBacklog', data: item });
+  } catch(e) { console.error('GAS save backlog error:', e); }
+}
+
+async function gasDeleteBacklog(id) {
+  if (!gasConfigured) return;
+  try {
+    await gasPost({ action: 'deleteBacklog', id });
+  } catch(e) { console.error('GAS delete backlog error:', e); }
+}
+
+async function gasPullAll() {
+  if (!gasConfigured) return;
+  try {
+    const [t, b] = await Promise.all([gasGet('getTasks'), gasGet('getBacklog')]);
+    if (Array.isArray(t)) { tasks = t.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+    if (Array.isArray(b)) { backlog = b; renderBacklog(); }
+    updateStats();
+  } catch(e) { console.error('GAS pull error:', e); }
+}
+
+async function connectGASFromSettings() {
+  const url = document.getElementById('gasUrlInput').value.trim();
+  const statusEl = document.getElementById('gasStatus');
+  if (!url) { showToast('Paste your Apps Script URL first.'); return; }
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(245,158,11,0.1)';
+  statusEl.style.color = 'var(--amber)';
+  statusEl.textContent = 'Connecting...';
+  try {
+    await connectGAS(url);
     statusEl.style.background = 'rgba(16,185,129,0.1)';
     statusEl.style.color = 'var(--green)';
-    statusEl.textContent = '✓ Connected! Syncing data across all your devices.';
-    subscribeToFirestore();
-    showToast('🔥 Firebase connected — data syncing!');
+    statusEl.textContent = '✓ Connected! Syncing with Google Sheets.';
+    showToast('🔗 Google Sheets connected!');
   } catch(e) {
-    if (statusEl) {
-      statusEl.style.display = 'block';
-      statusEl.style.background = 'rgba(239,68,68,0.1)';
-      statusEl.style.color = 'var(--red)';
-      statusEl.textContent = '✕ Connection failed: ' + e.message;
-    }
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '✕ ' + e.message;
   }
 }
 
-function subscribeToFirestore() {
-  if (!db) return;
-  // Real-time tasks listener
-  if (unsubTasks) unsubTasks();
-  unsubTasks = db.collection('tasks')
-    .orderBy('priorityScore', 'desc')
-    .onSnapshot(snap => {
-      tasks = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }));
-      renderTasks();
-      renderTimeline();
-      updateStats();
-    }, err => console.error('Tasks sync error:', err));
-
-  // Real-time backlog listener
-  if (unsubBacklog) unsubBacklog();
-  unsubBacklog = db.collection('backlog')
-    .onSnapshot(snap => {
-      backlog = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }));
-      renderBacklog();
-    }, err => console.error('Backlog sync error:', err));
+async function testGAS() {
+  const statusEl = document.getElementById('gasStatus');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(245,158,11,0.1)';
+  statusEl.style.color = 'var(--amber)';
+  statusEl.textContent = 'Testing...';
+  if (!gasConfigured) {
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '✕ Not connected — paste URL and tap Connect first.';
+    return;
+  }
+  try {
+    const data = await gasGet('getTasks');
+    statusEl.style.background = 'rgba(16,185,129,0.1)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Working! Found ${Array.isArray(data) ? data.length : 0} tasks in Google Sheets.`;
+  } catch(e) {
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '✕ Error: ' + e.message;
+  }
 }
 
-async function fbSaveTask(task) {
-  if (!db) return;
+async function connectGAS(url) {
+  if (!url) return false;
   try {
-    await db.collection('tasks').doc(String(task.id)).set(task);
-  } catch(e) { console.error('Save task error:', e); }
+    const res = await fetch(`${url}?action=getTasks`);
+    const data = await res.json();
+    if (!Array.isArray(data) && data.error) throw new Error(data.error);
+    gasUrl = url;
+    gasConfigured = true;
+    localStorage.setItem('gasUrl', url);
+    // Pull data and start polling every 30s
+    await gasPullAll();
+    if (syncInterval) clearInterval(syncInterval);
+    syncInterval = setInterval(gasPullAll, 30000);
+    return true;
+  } catch(e) {
+    throw new Error('Could not connect: ' + e.message);
+  }
 }
 
-async function fbDeleteTask(id) {
-  if (!db) return;
-  try {
-    await db.collection('tasks').doc(String(id)).delete();
-  } catch(e) { console.error('Delete task error:', e); }
+// ── CRYPTO (AES-256-GCM via Web Crypto API) ───────────────────
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
 }
 
-async function fbSaveBacklogItem(item) {
-  if (!db) return;
-  try {
-    await db.collection('backlog').doc(String(item.id)).set(item);
-  } catch(e) { console.error('Save backlog error:', e); }
+async function encryptData(password, plaintext) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(password, salt);
+  const enc  = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+  const buf = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+  buf.set(salt, 0); buf.set(iv, 16); buf.set(new Uint8Array(ciphertext), 28);
+  return btoa(String.fromCharCode(...buf));
 }
 
-async function fbDeleteBacklogItem(id) {
-  if (!db) return;
-  try {
-    await db.collection('backlog').doc(String(id)).delete();
-  } catch(e) { console.error('Delete backlog error:', e); }
+async function decryptData(password, encoded) {
+  const buf  = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+  const salt = buf.slice(0, 16);
+  const iv   = buf.slice(16, 28);
+  const data = buf.slice(28);
+  const key  = await deriveKey(password, salt);
+  const dec  = new TextDecoder();
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  return dec.decode(plain);
 }
 
-// Try auto-reconnect from localStorage
-function tryAutoConnectFirebase() {
+// ── LOCK SCREEN ───────────────────────────────────────────────
+let pinBuffer = '';
+let setupPin = '';
+let confirmBuffer = '';
+
+function updateDots(prefix, val, count=4) {
+  for (let i=0;i<count;i++) {
+    const d = document.getElementById(prefix+i);
+    if (d) d.classList.toggle('filled', i < val.length);
+  }
+}
+
+function flashError(prefix, count=4) {
+  for (let i=0;i<count;i++) {
+    const d = document.getElementById(prefix+i);
+    if (d) { d.classList.add('error'); setTimeout(()=>d.classList.remove('error'),500); }
+  }
+}
+
+// ── UNLOCK PIN ────────────────────────────────────────────────
+function pinKey(n) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += n;
+  updateDots('dot', pinBuffer);
+  if (pinBuffer.length === 4) setTimeout(() => attemptUnlock(), 120);
+}
+function pinDelete() { pinBuffer = pinBuffer.slice(0,-1); updateDots('dot', pinBuffer); }
+
+async function attemptUnlock() {
   try {
-    const saved = localStorage.getItem('fbConfig');
-    if (saved) {
-      const config = JSON.parse(saved);
-      if (firebase.apps.length) return;
-      firebase.initializeApp(config);
-      db = firebase.firestore();
-      fbConfigured = true;
-      subscribeToFirestore();
-      const el = document.getElementById('firebaseConfigInput');
-      if (el) el.value = saved;
-      const status = document.getElementById('firebaseStatus');
-      if (status) {
-        status.style.display = 'block';
-        status.style.background = 'rgba(16,185,129,0.1)';
-        status.style.color = 'var(--green)';
-        status.textContent = '✓ Firebase connected — syncing your data.';
-      }
+    await unlockWithPassword(pinBuffer);
+  } catch(e) {
+    flashError('dot');
+    document.getElementById('unlockError').textContent = 'Wrong PIN — try again.';
+    setTimeout(() => {
+      pinBuffer = '';
+      updateDots('dot', pinBuffer);
+      document.getElementById('unlockError').textContent = '';
+    }, 600);
+  }
+}
+
+// ── SETUP PIN ─────────────────────────────────────────────────
+function showSetupMode() {
+  document.getElementById('lockUnlockMode').style.display = 'none';
+  document.getElementById('lockSetupMode').style.display = 'block';
+  document.getElementById('setupStep1').style.display = 'block';
+  document.getElementById('setupStep2').style.display = 'none';
+  document.getElementById('setupStep3').style.display = 'none';
+  setupPin = ''; confirmBuffer = '';
+}
+
+function setupPinKey(n) {
+  if (setupPin.length >= 4) return;
+  setupPin += n;
+  updateDots('sdot', setupPin);
+  if (setupPin.length === 4) setTimeout(() => {
+    document.getElementById('setupStep1').style.display = 'none';
+    document.getElementById('setupStep2').style.display = 'block';
+  }, 200);
+}
+function setupPinDelete() { setupPin = setupPin.slice(0,-1); updateDots('sdot', setupPin); }
+
+function confirmPinKey(n) {
+  if (confirmBuffer.length >= 4) return;
+  confirmBuffer += n;
+  updateDots('cdot', confirmBuffer);
+  if (confirmBuffer.length === 4) setTimeout(() => {
+    if (confirmBuffer === setupPin) {
+      document.getElementById('setupStep2').style.display = 'none';
+      document.getElementById('setupStep3').style.display = 'block';
+    } else {
+      flashError('cdot');
+      document.getElementById('setupError').textContent = 'PINs do not match — try again.';
+      setTimeout(() => {
+        confirmBuffer = ''; setupPin = '';
+        updateDots('cdot', confirmBuffer);
+        document.getElementById('setupError').textContent = '';
+        document.getElementById('setupStep2').style.display = 'none';
+        document.getElementById('setupStep1').style.display = 'block';
+        updateDots('sdot', setupPin);
+      }, 700);
     }
-  } catch(e) { /* silent fail */ }
+  }, 200);
+}
+function confirmPinDelete() { confirmBuffer = confirmBuffer.slice(0,-1); updateDots('cdot', confirmBuffer); }
+
+async function finishSetup() {
+  const apiKeyVal = document.getElementById('lockApiKey').value.trim();
+  const gasUrlVal = document.getElementById('lockGasUrl').value.trim();
+  const btn = document.querySelector('#setupStep3 .lock-btn');
+  btn.disabled = true; btn.textContent = 'Encrypting...';
+  try {
+    const payload = JSON.stringify({ apiKey: apiKeyVal, gasUrl: gasUrlVal });
+    const encrypted = await encryptData(setupPin || confirmBuffer, payload);
+    localStorage.setItem('missionVault', encrypted);
+    localStorage.setItem('vaultExists', '1');
+    document.getElementById('setupError').textContent = '';
+    await unlockWithPassword(setupPin || confirmBuffer);
+  } catch(e) {
+    document.getElementById('setupError').textContent = 'Error: ' + e.message;
+    btn.disabled = false; btn.textContent = '🔐 Encrypt & Save';
+  }
+}
+
+async function unlockWithPassword(pass) {
+  const encrypted = localStorage.getItem('missionVault');
+  if (!encrypted) throw new Error('No vault found');
+  const plain   = await decryptData(pass, encrypted);
+  const payload = JSON.parse(plain);
+
+  if (payload.apiKey) {
+    apiKey = payload.apiKey;
+    const el = document.getElementById('apiKeyInput');
+    if (el) el.value = apiKey;
+  }
+  // Auto-connect GAS if URL stored in vault
+  if (payload.gasUrl && payload.gasUrl.trim()) {
+    try {
+      await connectGAS(payload.gasUrl.trim());
+      const el = document.getElementById('gasUrlInput');
+      if (el) el.value = payload.gasUrl;
+    } catch(e) { console.error('GAS auto-connect failed:', e); }
+  }
+
+  // Hide lock screen and init app
+  document.getElementById('lockOverlay').classList.add('hidden');
+  if (!gasConfigured) { seedDemo(); renderTasks(); renderTimeline(); renderBacklog(); }
 }
 
 // ── INIT ──────────────────────────────────────────────────────
@@ -869,13 +1161,7 @@ function init() {
   document.getElementById('currentDate').textContent =
     d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
   loadSavedSettings();
-  tryAutoConnectFirebase();
-  if (!fbConfigured) {
-    seedDemo();
-    renderTasks();
-    renderTimeline();
-    renderBacklog();
-  }
+  checkVaultExists();
 }
 
 // ── THEME ─────────────────────────────────────────────────────
@@ -885,6 +1171,78 @@ function toggleTheme() {
   document.body.classList.toggle('light', isLight);
   document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀️';
   document.getElementById('themeLabel').textContent = isLight ? 'Dark' : 'Light';
+}
+
+function lockApp() {
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+  apiKey = ''; gasUrl = ''; gasConfigured = false;
+  tasks = []; backlog = [];
+  pinBuffer = ''; updateDots('dot', pinBuffer);
+  document.getElementById('unlockError').textContent = '';
+  document.getElementById('lockUnlockMode').style.display = 'block';
+  document.getElementById('lockSetupMode').style.display = 'none';
+  document.getElementById('lockOverlay').classList.remove('hidden');
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+  document.getElementById('pinUnlock').style.display = isMobile ? 'block' : 'none';
+  document.getElementById('passwordUnlock').style.display = isMobile ? 'none' : 'block';
+  if (!isMobile) {
+    document.getElementById('lockPassword').value = '';
+    setTimeout(() => document.getElementById('lockPassword').focus(), 200);
+  }
+}
+
+function checkVaultExists() {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+  if (localStorage.getItem('vaultExists')) {
+    document.getElementById('lockUnlockMode').style.display = 'block';
+    document.getElementById('lockSetupMode').style.display = 'none';
+    if (isMobile) {
+      document.getElementById('pinUnlock').style.display = 'block';
+      document.getElementById('passwordUnlock').style.display = 'none';
+    } else {
+      document.getElementById('pinUnlock').style.display = 'none';
+      document.getElementById('passwordUnlock').style.display = 'block';
+      setTimeout(() => document.getElementById('lockPassword').focus(), 200);
+    }
+  } else {
+    showSetupMode();
+  }
+}
+
+function toggleUnlockMode() {
+  const pin = document.getElementById('pinUnlock');
+  const pass = document.getElementById('passwordUnlock');
+  const showingPin = pin.style.display !== 'none';
+  pin.style.display = showingPin ? 'none' : 'block';
+  pass.style.display = showingPin ? 'block' : 'none';
+  document.getElementById('unlockError').textContent = '';
+  pinBuffer = ''; updateDots('dot', pinBuffer);
+  if (!showingPin) setTimeout(() => document.getElementById('lockPassword').focus(), 100);
+}
+
+async function unlockWithPass() {
+  const pass = document.getElementById('lockPassword').value;
+  const errEl = document.getElementById('unlockError');
+  const btn = document.getElementById('unlockBtn');
+  if (!pass) { errEl.textContent = 'Enter your password.'; return; }
+  btn.disabled = true; btn.textContent = 'Unlocking...';
+  try {
+    await unlockWithPassword(pass);
+  } catch(e) {
+    errEl.textContent = 'Wrong password — try again.';
+    btn.disabled = false; btn.textContent = '🔓 Unlock';
+    document.getElementById('lockPassword').value = '';
+    document.getElementById('lockPassword').focus();
+  }
+}
+
+function loadSavedSettings() {
+  const savedKey = localStorage.getItem('claudeApiKey');
+  const savedModel = localStorage.getItem('claudeModel');
+  const savedGasUrl = localStorage.getItem('gasUrl');
+  if (savedKey) { apiKey = savedKey; const el = document.getElementById('apiKeyInput'); if (el) el.value = savedKey; }
+  if (savedModel) { activeModel = savedModel; const el = document.getElementById('modelSelect'); if (el) el.value = savedModel; }
+  if (savedGasUrl) { const el = document.getElementById('gasUrlInput'); if (el) el.value = savedGasUrl; }
 }
 
 // ── NAV ───────────────────────────────────────────────────────
@@ -1109,7 +1467,7 @@ function approveTask() {
     startTime: '', endTime: '',
     done: false, chunksCompleted: 0
   };
-  if (fbConfigured) { fbSaveTask(task); }
+  if (gasConfigured) { gasSaveTask(task); }
   else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
   clearCapture();
   showToast('✓ Task added to queue!');
@@ -1238,7 +1596,7 @@ function completeChunk(taskId) {
   if (!task) return;
   task.chunksCompleted = Math.min(task.chunksCompleted+1, task.chunks.length);
   if (task.chunksCompleted === task.chunks.length) task.done = true;
-  if (fbConfigured) fbSaveTask(task); else { renderTasks(); renderTimeline(); }
+  if (gasConfigured) gasSaveTask(task); else { renderTasks(); renderTimeline(); }
   closeModal();
   showToast(task.done ? '🎉 Task complete!' : `Chunk done! ${task.chunks.length - task.chunksCompleted} left.`);
 }
@@ -1249,11 +1607,11 @@ function toggleDone(taskId) {
   task.done = !task.done;
   if (task.done) task.chunksCompleted = task.chunks.length;
   else task.chunksCompleted = 0;
-  if (fbConfigured) fbSaveTask(task); else renderTasks();
+  if (gasConfigured) gasSaveTask(task); else renderTasks();
 }
 
 function deleteTask(taskId) {
-  if (fbConfigured) { fbDeleteTask(taskId); }
+  if (gasConfigured) { gasDeleteTask(taskId); }
   else { tasks = tasks.filter(t=>t.id!==taskId); renderTasks(); renderTimeline(); }
   closeModal();
   showToast('Task removed.');
@@ -1284,7 +1642,7 @@ function updateTaskTime(taskId) {
     };
     task.suggestedTimeBlock = `${fmt(task.startTime)} - ${fmt(task.endTime||calcEndTime(task))}`;
   }
-  if (fbConfigured) fbSaveTask(task); else { renderTasks(); renderTimeline(); }
+  if (gasConfigured) gasSaveTask(task); else { renderTasks(); renderTimeline(); }
 }
 
 // ── QUICK ADD (with Claude validation) ───────────────────────
@@ -1388,7 +1746,7 @@ function confirmQuickAdd() {
     note: pendingQuickTask.note||'',
     startTime:'', endTime:'', done:false, chunksCompleted:0
   };
-  if (fbConfigured) { fbSaveTask(task); }
+  if (gasConfigured) { gasSaveTask(task); }
   else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
   dismissInline();
   showToast('✓ Task added to queue!');
@@ -1405,7 +1763,7 @@ function sendToBacklog() {
     chunks: pendingQuickTask.chunks||[],
     note: pendingQuickTask.note||''
   };
-  if (fbConfigured) { fbSaveBacklogItem(item); }
+  if (gasConfigured) { gasSaveBacklog(item); }
   else { backlog.push(item); renderBacklog(); }
   dismissInline();
   showToast('→ Sent to backlog.');
@@ -1422,7 +1780,7 @@ function addToBacklog() {
   const input = document.getElementById('backlogInput').value.trim();
   if (!input) return;
   const item = { id: Date.now(), title: input, rawInput: input, category: 'work', priorityScore: 5, chunks: [], note: '' };
-  if (fbConfigured) { fbSaveBacklogItem(item); }
+  if (gasConfigured) { gasSaveBacklog(item); }
   else { backlog.push(item); renderBacklog(); }
   document.getElementById('backlogInput').value = '';
   showToast('→ Added to backlog.');
@@ -1432,9 +1790,9 @@ function promoteToQueue(id) {
   const item = backlog.find(b=>b.id===id);
   if (!item) return;
   const task = { ...item, urgencyScore: item.urgencyScore||5, importanceScore: item.importanceScore||5, startTime:'', endTime:'', done:false, chunksCompleted:0 };
-  if (fbConfigured) {
-    fbSaveTask(task);
-    fbDeleteBacklogItem(id);
+  if (gasConfigured) {
+    gasSaveTask(task);
+    gasDeleteBacklog(id);
   } else {
     tasks.push(task);
     tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
@@ -1446,7 +1804,7 @@ function promoteToQueue(id) {
 }
 
 function removeFromBacklog(id) {
-  if (fbConfigured) { fbDeleteBacklogItem(id); }
+  if (gasConfigured) { gasDeleteBacklog(id); }
   else { backlog = backlog.filter(b=>b.id!==id); renderBacklog(); }
 }
 
@@ -1603,8 +1961,8 @@ function loadSavedSettings() {
 function clearAllTasks() {
   if (!tasks.length) { showToast('No tasks to clear.'); return; }
   if (!confirm('Clear all tasks? This cannot be undone.')) return;
-  if (fbConfigured) {
-    tasks.forEach(t => fbDeleteTask(t.id));
+  if (gasConfigured) {
+    tasks.forEach(t => gasDeleteTask(t.id));
   } else {
     tasks = [];
     renderTasks();
