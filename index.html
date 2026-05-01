@@ -484,7 +484,40 @@
     }
     .backlog-add-btn:hover { background: rgba(13,148,136,0.25); }
 
-    /* ── LOCK SCREEN ── */
+    /* ── VISUAL CALENDAR ── */
+    .cal-grid { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: 0; margin-bottom: 16px; }
+    .cal-hour-labels { display: flex; flex-direction: column; }
+    .cal-hour-label { height: 56px; display: flex; align-items: flex-start; padding-top: 2px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); text-align: right; padding-right: 8px; }
+    .cal-slots { position: relative; border-left: 1px solid var(--border); }
+    .cal-hour-line { height: 56px; border-bottom: 1px solid var(--border-light); position: relative; }
+    .cal-hour-line.current-hour { background: rgba(245,158,11,0.04); }
+    .cal-hour-line.current-hour::before { content: ''; position: absolute; left: -1px; top: 0; width: 3px; height: 100%; background: var(--amber); }
+    .cal-block {
+      position: absolute; left: 4px; right: 4px; border-radius: 6px;
+      padding: 4px 8px; font-size: 11px; font-weight: 500;
+      overflow: hidden; cursor: pointer; transition: opacity 0.15s;
+      line-height: 1.3; z-index: 2;
+    }
+    .cal-block:hover { opacity: 0.85; }
+    .cal-block.blocked { background: var(--surface3); color: var(--text-muted); border: 1px solid var(--border); cursor: default; font-style: italic; }
+    .cal-block.work { background: rgba(99,102,241,0.25); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+    .cal-block.personal { background: rgba(13,148,136,0.25); color: #5eead4; border: 1px solid rgba(13,148,136,0.4); }
+    .cal-block.health { background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+    .cal-block.interview { background: rgba(245,158,11,0.25); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+    .cal-now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--amber); z-index: 3; }
+    .cal-now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
+    .cal-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+    .cal-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .gcal-sync-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 11px; background: rgba(13,148,136,0.15);
+      border: 1px solid rgba(13,148,136,0.4); border-radius: var(--radius);
+      color: var(--teal); font-family: 'DM Sans', sans-serif; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+    }
+    .gcal-sync-btn:hover { background: rgba(13,148,136,0.25); }
+    .gcal-sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .lock-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; }
     .lock-overlay.hidden { display: none; }
     .lock-logo { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 6px; color: var(--amber); margin-bottom: 4px; }
@@ -500,6 +533,22 @@
     .lock-error { font-size: 12px; color: var(--red); text-align: center; margin-top: 10px; min-height: 18px; }
     .lock-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.6; }
     .lock-mode-toggle { background: none; border: none; color: var(--teal); font-size: 12px; cursor: pointer; margin-top: 10px; text-align: center; width: 100%; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
+
+    /* ── INTERACTIVE CALENDAR ── */
+    .cal-interactive-slots { position: relative; cursor: crosshair; }
+    .cal-hover-line { position: absolute; left: 0; right: 0; height: 2px; background: rgba(245,158,11,0.4); pointer-events: none; z-index: 4; display: none; }
+    .cal-hover-label { position: absolute; left: 4px; background: var(--amber); color: #000; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; pointer-events: none; z-index: 5; display: none; }
+    .cal-selection { position: absolute; left: 4px; right: 4px; background: rgba(245,158,11,0.12); border: 2px dashed var(--amber); border-radius: 6px; pointer-events: none; z-index: 4; display: none; }
+    .cal-view-toggle { display: flex; gap: 4px; background: var(--surface2); border-radius: 20px; padding: 3px; margin-bottom: 14px; }
+    .cal-view-btn { flex: 1; padding: 6px 12px; border-radius: 16px; border: none; background: transparent; color: var(--text-muted); font-family: 'DM Sans',sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .cal-view-btn.active { background: var(--surface); color: var(--amber); }
+    .cal-quick-popup { position: absolute; z-index: 100; background: var(--surface); border: 1px solid var(--amber); border-radius: var(--radius); padding: 14px; width: 240px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .cal-quick-popup input, .cal-quick-popup select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans',sans-serif; font-size: 13px; padding: 8px 10px; outline: none; margin-bottom: 8px; }
+    .cal-quick-popup input:focus { border-color: var(--amber); }
+    .cal-popup-time { font-family: 'JetBrains Mono',monospace; font-size: 11px; color: var(--amber); margin-bottom: 8px; font-weight: 600; }
+    .cal-popup-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .cal-popup-save { flex: 1; padding: 8px; background: var(--amber); color: #000; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans',sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .cal-popup-cancel { padding: 8px 10px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'DM Sans',sans-serif; font-size: 12px; cursor: pointer; }
 
     /* ── PIN PAD ── */
     .pin-dots { display: flex; justify-content: center; gap: 14px; margin: 20px 0 24px; }
@@ -639,6 +688,10 @@
   <button class="sidebar-nav-btn" id="snav-capture" onclick="switchView('capture')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v8M8 12h8"/></svg>
     Capture
+  </button>
+  <button class="sidebar-nav-btn" id="snav-calendar" onclick="switchView('calendar')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Calendar
   </button>
   <button class="sidebar-nav-btn" id="snav-backlog" onclick="switchView('backlog')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -826,14 +879,99 @@
 
   <!-- ── TIMELINE ── -->
   <div id="view-timeline" class="view">
-    <div class="section-header" style="margin-bottom:16px">
-      <span class="section-title">Today's Timeline</span>
+    <div class="section-header" style="margin-bottom:12px">
+      <span class="section-title">Today's Calendar</span>
       <button class="export-btn" onclick="exportICS()">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export Work ICS
+        Work ICS
       </button>
     </div>
-    <div class="timeline" id="timeline"></div>
+
+    <!-- Google Cal Sync -->
+    <button class="gcal-sync-btn" id="gcalSyncBtn" onclick="syncToGoogleCal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Sync Personal Tasks to Google Calendar
+    </button>
+
+    <!-- Legend -->
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--surface3)"></div>Blocked</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(99,102,241,0.5)"></div>Work</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(13,148,136,0.5)"></div>Personal</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(16,185,129,0.5)"></div>Health</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(245,158,11,0.5)"></div>Interview</div>
+    </div>
+
+    <!-- Visual Calendar Grid -->
+    <div class="cal-grid" id="calGrid">
+      <div class="cal-hour-labels" id="calHourLabels"></div>
+      <div class="cal-slots" id="calSlots"></div>
+    </div>
+  </div>
+
+  <!-- ── CALENDAR ── -->
+  <div id="view-calendar" class="view">
+    <div class="section-header" style="margin-bottom:12px">
+      <span class="section-title">Calendar</span>
+      <div style="display:flex;gap:8px">
+        <button class="gcal-sync-btn" style="width:auto;padding:6px 12px;margin:0;font-size:11px" onclick="syncToGoogleCal()">↑ Sync to GCal</button>
+        <button class="export-btn" onclick="exportICS()">Work ICS</button>
+      </div>
+    </div>
+
+    <!-- Day/Week toggle -->
+    <div class="cal-view-toggle">
+      <button class="cal-view-btn active" id="calDayBtn" onclick="setCalView('day')">Day</button>
+      <button class="cal-view-btn" id="calWeekBtn" onclick="setCalView('week')">Week</button>
+    </div>
+
+    <!-- Date nav -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="icon-btn" onclick="calNavPrev()" style="font-size:18px;padding:4px 10px">‹</button>
+      <span id="calDateLabel" style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--text)"></span>
+      <button class="icon-btn" onclick="calNavNext()" style="font-size:18px;padding:4px 10px">›</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="cal-legend" style="margin-bottom:10px">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--surface3)"></div>Blocked</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(99,102,241,0.5)"></div>Work</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(13,148,136,0.5)"></div>Personal</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(16,185,129,0.5)"></div>Health</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(245,158,11,0.5)"></div>Interview</div>
+    </div>
+
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
+      💡 Click or drag on any empty slot to add a task
+    </div>
+
+    <!-- Interactive Calendar Grid -->
+    <div style="position:relative" id="calInteractiveWrap">
+      <div class="cal-grid" id="calGrid2">
+        <div class="cal-hour-labels" id="calHourLabels2"></div>
+        <div class="cal-interactive-slots" id="calInteractiveSlots">
+          <div class="cal-hover-line" id="calHoverLine"></div>
+          <div class="cal-hover-label" id="calHoverLabel"></div>
+          <div class="cal-selection" id="calSelection"></div>
+        </div>
+      </div>
+      <!-- Quick-add popup -->
+      <div class="cal-quick-popup" id="calQuickPopup" style="display:none">
+        <div class="cal-popup-time" id="calPopupTime"></div>
+        <input type="text" id="calPopupTitle" placeholder="Task title..." onkeydown="if(event.key==='Enter')calPopupSave()">
+        <select id="calPopupCat">
+          <option value="work">💼 Work</option>
+          <option value="personal">🏠 Personal</option>
+          <option value="health">💪 Health</option>
+          <option value="interview">🎯 Interview Prep</option>
+        </select>
+        <input type="number" id="calPopupDur" placeholder="Duration (minutes)" value="30" min="15" max="480">
+        <div class="cal-popup-actions">
+          <button class="cal-popup-cancel" onclick="closeCalPopup()">Cancel</button>
+          <button class="cal-popup-save" onclick="calPopupSave()">✦ Add + Analyze</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ── BACKLOG ── -->
@@ -930,6 +1068,10 @@
   <button class="nav-btn" id="nav-capture" onclick="switchView('capture')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v8M8 12h8"/></svg>
     Capture
+  </button>
+  <button class="nav-btn" id="nav-calendar" onclick="switchView('calendar')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Calendar
   </button>
   <button class="nav-btn" id="nav-backlog" onclick="switchView('backlog')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -1351,6 +1493,8 @@ function switchView(view) {
   if (nb) nb.classList.add('active');
   const sb = document.getElementById('snav-' + view);
   if (sb) sb.classList.add('active');
+  if (view === 'calendar') { renderCalendar2(); setTimeout(scrollCalToNow, 100); }
+  if (view === 'timeline') renderTimeline();
 }
 
 // ── FILTER ───────────────────────────────────────────────────
@@ -1439,11 +1583,24 @@ function handleCalUpload(event) {
       const text = data.content[0].text;
       const cal = JSON.parse(text.replace(/```json|```/g,'').trim());
       calendarContext = JSON.stringify(cal);
+      calendarBlocked = (cal.blocked||[]).map(b => {
+        // Parse time strings like "9:00-10:00" or "9:00 AM - 10:00 AM"
+        const times = b.time.match(/(\d+):?(\d*)\s*(AM|PM)?\s*[-–]\s*(\d+):?(\d*)\s*(AM|PM)?/i);
+        if (!times) return null;
+        let sh = parseInt(times[1]), sm = parseInt(times[2]||0);
+        let eh = parseInt(times[4]), em = parseInt(times[5]||0);
+        const spm = (times[3]||'').toUpperCase()==='PM';
+        const epm = (times[6]||'').toUpperCase()==='PM';
+        if (spm && sh!==12) sh+=12;
+        if (epm && eh!==12) eh+=12;
+        return { start: sh+sm/60, end: eh+em/60, title: b.title||'Busy' };
+      }).filter(Boolean);
       preview.innerHTML =
         `<strong style="color:var(--text)">📅 Calendar parsed</strong><br>` +
         `<span style="color:var(--red)">Blocked: ${(cal.blocked||[]).map(b=>b.time+' '+b.title).join(', ')||'none'}</span><br>` +
         `<span style="color:var(--green)">Free: ${(cal.free||[]).join(', ')||'none detected'}</span>`;
       renderFreeSlots(cal.free || []);
+      renderTimeline(); // re-render calendar with blocked slots
     } catch(err) {
       preview.textContent = '✓ Screenshot saved. Will use as context for task scheduling.';
       calendarContext = 'User uploaded a calendar screenshot but parsing failed.';
@@ -1601,13 +1758,11 @@ function renderTasks() {
     const bars = task.chunks.map((_,i) =>
       `<div class="chunk-pill ${i < task.chunksCompleted ? 'done' : i === task.chunksCompleted ? 'active' : ''}"></div>`
     ).join('');
+    const progress = task.chunks.length > 0 ? `${task.chunksCompleted}/${task.chunks.length} chunks` : '';
     return `
       <div class="task-card ${task.category} ${task.done?'done':''}" onclick="openTask(${task.id})">
         <div class="task-top">
           <div class="task-left">
-            <button class="check-btn ${task.done?'done':''}" onclick="event.stopPropagation();toggleDone(${task.id})">
-              ${task.done?`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`:''}
-            </button>
             <span class="task-title">${task.title}</span>
           </div>
           <span class="priority-score ${sc}">${task.priorityScore}</span>
@@ -1616,8 +1771,24 @@ function renderTasks() {
           <span class="badge badge-${catBadge}">${task.category}</span>
           ${totalTime > 0 ? `<span class="task-time">⏱ ${totalTime}m</span>` : ''}
           ${task.suggestedTimeBlock ? `<span class="task-time">📅 ${task.suggestedTimeBlock}</span>` : ''}
+          ${progress ? `<span class="task-time">${progress}</span>` : ''}
         </div>
         ${task.chunks.length > 0 ? `<div class="chunk-bar">${bars}</div>` : ''}
+        ${task.userNotes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--surface2);border-radius:4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${task.userNotes}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">
+          ${!task.done ? `
+            <button onclick="markNextChunk(${task.id})" style="flex:1;padding:7px 10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:20px;color:var(--amber);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;font-weight:500">
+              ✓ ${task.chunksCompleted < task.chunks.length && task.chunks.length > 0 ? 'Complete Chunk ' + (task.chunksCompleted+1) : 'Mark Complete'}
+            </button>
+            <button onclick="toggleDone(${task.id})" style="padding:7px 12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;color:var(--green);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer">
+              ✓✓ Done
+            </button>
+          ` : `
+            <button onclick="toggleDone(${task.id})" style="flex:1;padding:7px 10px;background:rgba(139,149,168,0.1);border:1px solid var(--border);border-radius:20px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer">
+              ↩ Reopen
+            </button>
+          `}
+        </div>
       </div>`;
   }).join('');
 }
@@ -1659,9 +1830,7 @@ function openTask(id) {
     </div>
     ${task.note?`<div style="font-size:12px;color:var(--text-muted);padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:14px;line-height:1.6;font-style:italic">"${task.note}"</div>`:''}
     <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Work Chunks</div>
-    <div class="chunks-list">`;
-
-  task.chunks.forEach((chunk, i) => {
+    <div class="chunks-list">`;((chunk, i) => {
     const isDone = i < task.chunksCompleted;
     const isActive = i === task.chunksCompleted && !task.done;
     html += `
@@ -1676,28 +1845,60 @@ function openTask(id) {
   });
 
   html += `</div>
-    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
-      ${task.category==='work'?`<button class="export-btn" onclick="exportSingleTask(${id})" style="flex:1;min-width:140px">
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Notes</div>
+      <textarea id="taskNotesInput" rows="3" placeholder="Add notes, links, context..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;resize:vertical;outline:none;line-height:1.5;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">${task.userNotes||''}</textarea>
+      <button onclick="saveTaskNotes(${id})" style="margin-top:6px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">Save Notes</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+      ${!task.done ? `
+        <button onclick="markNextChunk(${id});closeModal()" style="flex:2;padding:11px;background:var(--green);color:#000;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">
+          ✓ ${task.chunksCompleted < task.chunks.length && task.chunks.length > 0 ? 'Complete Chunk '+(task.chunksCompleted+1) : 'Mark Complete'}
+        </button>
+        <button onclick="toggleDone(${id});closeModal()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">✓✓ All Done</button>
+      ` : `
+        <button onclick="toggleDone(${id});closeModal()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">↩ Reopen Task</button>
+      `}
+      ${task.category==='work'?`<button class="export-btn" onclick="exportSingleTask(${id})" style="min-width:110px">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export to Outlook (.ics)
+        Outlook ICS
       </button>`:''}
-      <button class="action-btn action-btn-danger" onclick="deleteTask(${id})" style="flex:1;padding:10px;min-width:100px">Delete</button>
+      <button class="action-btn action-btn-danger" onclick="deleteTask(${id})" style="padding:10px 14px">Delete</button>
     </div>`;
 
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('taskModal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
-
-function completeChunk(taskId) {
+function saveTaskNotes(taskId) {
   const task = tasks.find(t=>t.id===taskId);
   if (!task) return;
-  task.chunksCompleted = Math.min(task.chunksCompleted+1, task.chunks.length);
-  if (task.chunksCompleted === task.chunks.length) task.done = true;
-  if (gasConfigured) gasSaveTask(task); else { renderTasks(); renderTimeline(); }
+  task.userNotes = document.getElementById('taskNotesInput').value;
+  if (gasConfigured) gasSaveTask(task);
+  else { const i = tasks.findIndex(t=>t.id===taskId); if(i>=0) tasks[i]=task; }
+  showToast('✓ Notes saved.');
+}
+
+function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
+
+function markNextChunk(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task || task.done) return;
+  if (task.chunks.length === 0 || task.chunksCompleted >= task.chunks.length) {
+    task.done = true;
+    task.chunksCompleted = task.chunks.length;
+  } else {
+    task.chunksCompleted++;
+    if (task.chunksCompleted >= task.chunks.length) task.done = true;
+  }
+  if (gasConfigured) gasSaveTask(task);
+  renderTasks(); renderTimeline(); renderCalendar2();
+  showToast(task.done ? '🎉 Task complete!' : `Chunk ${task.chunksCompleted}/${task.chunks.length} done!`);
+}
+
+function completeChunk(taskId) {
+  markNextChunk(taskId);
   closeModal();
-  showToast(task.done ? '🎉 Task complete!' : `Chunk done! ${task.chunks.length - task.chunksCompleted} left.`);
 }
 
 function toggleDone(taskId) {
@@ -1706,7 +1907,9 @@ function toggleDone(taskId) {
   task.done = !task.done;
   if (task.done) task.chunksCompleted = task.chunks.length;
   else task.chunksCompleted = 0;
-  if (gasConfigured) gasSaveTask(task); else renderTasks();
+  if (gasConfigured) gasSaveTask(task);
+  renderTasks(); renderTimeline(); renderCalendar2();
+  showToast(task.done ? '🎉 Marked complete!' : '↩ Task reopened.');
 }
 
 function deleteTask(taskId) {
@@ -1942,41 +2145,438 @@ function renderBacklog() {
   }).join('');
 }
 
-// ── TIMELINE ──────────────────────────────────────────────────
-function renderTimeline() {
-  const container = document.getElementById('timeline');
-  const now = new Date();
-  const currentHour = now.getHours();
-  const hours = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+// ── INTERACTIVE CALENDAR ──────────────────────────────────────
+let calView = 'day';
+let calDate = new Date();
+let calDragStart = null;
+let calDragEnd = null;
+let calPopupStartH = 9;
+let calPopupStartM = 0;
+let calPopupDurMin = 30;
 
-  container.innerHTML = hours.map(hour => {
-    const isCurrent = hour === currentHour;
-    const label = hour===0?'12 AM':hour<12?`${hour} AM`:hour===12?'12 PM':`${hour-12} PM`;
-    const tasksHere = tasks.filter(t => {
-      // Prefer explicit startTime (24h), fall back to suggestedTimeBlock string
-      if (t.startTime) {
-        const h = parseInt(t.startTime.split(':')[0]);
-        return h === hour;
-      }
-      const tb = t.suggestedTimeBlock||'';
-      const m = tb.match(/(\d+):\d+\s*(AM|PM)/i);
-      if (!m) return false;
-      let h = parseInt(m[1]);
-      const pm = m[2].toUpperCase()==='PM';
-      if (pm && h!==12) h+=12;
-      if (!pm && h===12) h=0;
-      return h===hour;
-    });
-    const blocksHtml = tasksHere.map(t=>`
-      <div class="timeline-block ${t.category}" onclick="openTask(${t.id})" style="cursor:pointer">
-        <div class="timeline-block-title">${t.title}</div>
-        <div class="timeline-block-dur">⏱ ${t.chunks.reduce((s,c)=>s+c.duration,0)}m · P${t.priorityScore}</div>
-      </div>`).join('');
+const CAL2_START = 6;
+const CAL2_END   = 22;
+const CAL2_PX    = 60; // px per hour
 
-    return `<div class="timeline-slot ${isCurrent?'current':''}" data-time="${label}">
-      ${blocksHtml || (isCurrent?`<div style="font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;padding:4px 0">← Now</div>`:`<div style="height:22px"></div>`)}
-    </div>`;
+function setCalView(v) {
+  calView = v;
+  document.getElementById('calDayBtn').classList.toggle('active', v==='day');
+  document.getElementById('calWeekBtn').classList.toggle('active', v==='week');
+  renderCalendar2();
+}
+
+function calNavPrev() {
+  const d = new Date(calDate);
+  if (calView==='day') d.setDate(d.getDate()-1);
+  else d.setDate(d.getDate()-7);
+  calDate = d;
+  renderCalendar2();
+}
+
+function calNavNext() {
+  const d = new Date(calDate);
+  if (calView==='day') d.setDate(d.getDate()+1);
+  else d.setDate(d.getDate()+7);
+  calDate = d;
+  renderCalendar2();
+}
+
+function timeToY2(hour, minute=0) {
+  return ((hour - CAL2_START) + minute/60) * CAL2_PX;
+}
+
+function yToTime(y) {
+  const totalMin = (y / CAL2_PX) * 60;
+  const h = Math.floor(totalMin/60) + CAL2_START;
+  const m = Math.round((totalMin%60)/15)*15; // snap to 15min
+  return { h: Math.min(h, CAL2_END-1), m: m===60?0:m };
+}
+
+function fmt12(h, m) {
+  const ampm = h>=12?'PM':'AM';
+  const h12 = h%12||12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function renderCalendar2() {
+  const labels = document.getElementById('calHourLabels2');
+  const slots  = document.getElementById('calInteractiveSlots');
+  const label  = document.getElementById('calDateLabel');
+  if (!labels || !slots) return;
+
+  // Date label
+  const isToday = calDate.toDateString() === new Date().toDateString();
+  label.textContent = calDate.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}) + (isToday?' · Today':'');
+
+  const hours = [];
+  for (let h = CAL2_START; h <= CAL2_END; h++) hours.push(h);
+  const totalH = (CAL2_END - CAL2_START) * CAL2_PX;
+
+  // Hour labels
+  labels.innerHTML = hours.map(h => {
+    const lbl = h===0?'12AM':h<12?`${h}AM`:h===12?'12PM':`${h-12}PM`;
+    return `<div style="height:${CAL2_PX}px;display:flex;align-items:flex-start;padding-top:2px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);text-align:right;padding-right:8px">${lbl}</div>`;
   }).join('');
+
+  // Rebuild slots area (keep hover/selection/popup elements)
+  const hoverLine = document.getElementById('calHoverLine');
+  const hoverLbl  = document.getElementById('calHoverLabel');
+  const selection = document.getElementById('calSelection');
+  const popup     = document.getElementById('calQuickPopup');
+
+  slots.style.height   = totalH + 'px';
+  slots.style.position = 'relative';
+
+  // Clear old blocks only
+  slots.querySelectorAll('.cal-block, .cal-hour-line2, .cal-now-line').forEach(e => e.remove());
+
+  // Hour lines
+  hours.forEach((h,i) => {
+    const div = document.createElement('div');
+    div.className = 'cal-hour-line2';
+    div.style.cssText = `position:absolute;left:0;right:0;top:${i*CAL2_PX}px;height:${CAL2_PX}px;border-bottom:1px solid var(--border-light);box-sizing:border-box`;
+    // Half-hour dashed line
+    const half = document.createElement('div');
+    half.style.cssText = `position:absolute;left:0;right:0;top:50%;border-bottom:1px dashed var(--border-light);opacity:0.4`;
+    div.appendChild(half);
+    slots.insertBefore(div, hoverLine);
+  });
+
+  // Now line (only for today)
+  if (isToday) {
+    const now = new Date();
+    const nowY = timeToY2(now.getHours(), now.getMinutes());
+    if (nowY >= 0 && nowY <= totalH) {
+      const nowLine = document.createElement('div');
+      nowLine.className = 'cal-now-line';
+      nowLine.style.cssText = `position:absolute;left:0;right:0;top:${nowY}px;height:2px;background:var(--amber);z-index:3`;
+      nowLine.innerHTML = '<div style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--amber)"></div>';
+      slots.insertBefore(nowLine, hoverLine);
+    }
+  }
+
+  // Blocked slots
+  calendarBlocked.forEach(b => {
+    const y = timeToY2(b.start);
+    const h = (b.end - b.start) * CAL2_PX;
+    if (y < 0 || h <= 0) return;
+    const block = document.createElement('div');
+    block.className = 'cal-block blocked';
+    block.style.cssText = `top:${y}px;height:${Math.max(h-2,20)}px;position:absolute;left:4px;right:4px`;
+    block.textContent = `🔒 ${b.title||'Busy'}`;
+    slots.insertBefore(block, hoverLine);
+  });
+
+  // Task blocks for this day
+  const dateStr = calDate.toDateString();
+  tasks.forEach(task => {
+    if (task.done) return;
+    // Only show tasks that belong to this date
+    if (task.taskDate && task.taskDate !== dateStr) return;
+    // If no taskDate, show on today only
+    if (!task.taskDate && dateStr !== new Date().toDateString()) return;
+
+    let sh=null, sm=0;
+    if (task.startTime) { [sh,sm] = task.startTime.split(':').map(Number); }
+    else {
+      const m = (task.suggestedTimeBlock||'').match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (m) {
+        sh=parseInt(m[1]); sm=parseInt(m[2]);
+        if (m[3].toUpperCase()==='PM'&&sh!==12) sh+=12;
+        if (m[3].toUpperCase()==='AM'&&sh===12) sh=0;
+      }
+    }
+    if (sh===null) return;
+    const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0)||30;
+    const y = timeToY2(sh,sm);
+    const bh = (totalMin/60)*CAL2_PX;
+    if (y<0||y>totalH) return;
+    const block = document.createElement('div');
+    block.className = `cal-block ${task.category}`;
+    block.style.cssText = `top:${y}px;height:${Math.max(bh-3,24)}px;position:absolute;left:4px;right:4px`;
+    block.innerHTML = `<div style="font-weight:600;font-size:11px;margin-bottom:1px">${task.title}</div><div style="font-size:9px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>`;
+    block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
+    slots.insertBefore(block, hoverLine);
+  });
+
+  // Mouse/touch events for click-to-add
+  slots.onmousemove = (e) => {
+    const rect = slots.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const {h,m} = yToTime(y);
+    hoverLine.style.top = timeToY2(h,m) + 'px';
+    hoverLine.style.display = 'block';
+    hoverLbl.style.top = (timeToY2(h,m)-16) + 'px';
+    hoverLbl.textContent = fmt12(h,m);
+    hoverLbl.style.display = 'block';
+
+    if (calDragStart !== null) {
+      calDragEnd = { h, m };
+      const startY = timeToY2(calDragStart.h, calDragStart.m);
+      const endY   = timeToY2(h, m);
+      const selTop = Math.min(startY, endY);
+      const selH   = Math.abs(endY - startY);
+      selection.style.top     = selTop + 'px';
+      selection.style.height  = Math.max(selH, 15) + 'px';
+      selection.style.display = 'block';
+    }
+  };
+
+  slots.onmouseleave = () => {
+    hoverLine.style.display = 'none';
+    hoverLbl.style.display  = 'none';
+    if (calDragStart === null) selection.style.display = 'none';
+  };
+
+  slots.onmousedown = (e) => {
+    if (e.target !== slots && !e.target.classList.contains('cal-hour-line2')) return;
+    const rect = slots.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    calDragStart = yToTime(y);
+    selection.style.display = 'block';
+  };
+
+  slots.onmouseup = (e) => {
+    if (calDragStart === null) return;
+    const rect = slots.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const end = yToTime(y);
+    const startMin = calDragStart.h*60 + calDragStart.m;
+    const endMin   = end.h*60 + end.m;
+    const dur = Math.abs(endMin - startMin);
+    const start = startMin < endMin ? calDragStart : end;
+
+    calPopupStartH = start.h;
+    calPopupStartM = start.m;
+    calPopupDurMin = Math.max(dur, 15);
+    calDragStart   = null;
+    selection.style.display = 'none';
+    openCalPopup(e.clientX - slots.getBoundingClientRect().left, timeToY2(start.h, start.m));
+  };
+
+  // Single click (no drag)
+  slots.onclick = (e) => {
+    if (e.target !== slots && !e.target.classList.contains('cal-hour-line2')) return;
+  };
+}
+
+function openCalPopup(x, y) {
+  const popup = document.getElementById('calQuickPopup');
+  const wrap  = document.getElementById('calInteractiveWrap');
+  const wrapW = wrap.offsetWidth;
+  const endH  = Math.floor((calPopupStartH*60+calPopupStartM+calPopupDurMin)/60);
+  const endM  = (calPopupStartH*60+calPopupStartM+calPopupDurMin)%60;
+
+  document.getElementById('calPopupTime').textContent =
+    `${fmt12(calPopupStartH,calPopupStartM)} → ${fmt12(endH,endM)} (${calPopupDurMin}min)`;
+  document.getElementById('calPopupTitle').value = '';
+  document.getElementById('calPopupDur').value = calPopupDurMin;
+
+  // Position popup — keep inside viewport
+  const popW = 240;
+  const left = Math.min(x + 60, wrapW - popW - 8);
+  popup.style.left = Math.max(left, 4) + 'px';
+  popup.style.top  = (y + 8) + 'px';
+  popup.style.display = 'block';
+  setTimeout(() => document.getElementById('calPopupTitle').focus(), 50);
+}
+
+function closeCalPopup() {
+  document.getElementById('calQuickPopup').style.display = 'none';
+  calDragStart = null;
+  document.getElementById('calSelection').style.display = 'none';
+}
+
+async function calPopupSave() {
+  const title = document.getElementById('calPopupTitle').value.trim();
+  const cat   = document.getElementById('calPopupCat').value;
+  const dur   = parseInt(document.getElementById('calPopupDur').value) || 30;
+  if (!title) { document.getElementById('calPopupTitle').focus(); return; }
+
+  closeCalPopup();
+
+  const sh = String(calPopupStartH).padStart(2,'0');
+  const sm = String(calPopupStartM).padStart(2,'0');
+  const endMin = calPopupStartH*60+calPopupStartM+dur;
+  const eh = String(Math.floor(endMin/60)%24).padStart(2,'0');
+  const em = String(endMin%60).padStart(2,'0');
+
+  // Build task directly — Claude will analyze in background
+  const task = {
+    id: Date.now(),
+    title,
+    rawInput: title,
+    category: cat,
+    urgencyScore: 6, importanceScore: 7, priorityScore: 7,
+    chunks: [{ title: 'Complete: ' + title, duration: dur, description: title }],
+    startTime: `${sh}:${sm}`,
+    endTime: `${eh}:${em}`,
+    taskDate: calDate.toDateString(),
+    suggestedTimeBlock: `${fmt12(calPopupStartH,calPopupStartM)} - ${fmt12(Math.floor(endMin/60)%24, endMin%60)}`,
+    note: 'Added from calendar',
+    userNotes: '',
+    done: false, chunksCompleted: 0
+  };
+
+  if (gasConfigured) { gasSaveTask(task); }
+  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); }
+  renderCalendar2();
+  renderTimeline();
+  showToast('✓ Task added to calendar!');
+
+  // Background Claude analysis if API key available
+  if (apiKey) {
+    try {
+      const sys = `You are a productivity AI. Analyze this task and return ONLY JSON:
+{"urgencyScore":7,"importanceScore":8,"priorityScore":8,"chunks":[{"title":"chunk","duration":${Math.round(dur/2)},"description":"action"}],"note":"one sentence"}
+Keep total chunk duration around ${dur} minutes.`;
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:activeModel,max_tokens:400,system:sys,messages:[{role:'user',content:title}]})
+      });
+      const data = await res.json();
+      const a = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+      Object.assign(task, a);
+      if (gasConfigured) gasSaveTask(task);
+      else { const idx = tasks.findIndex(t=>t.id===task.id); if(idx>=0) tasks[idx]=task; renderTasks(); }
+      renderCalendar2();
+      showToast('✦ Claude analyzed your task!');
+    } catch(e) { /* silent — task already saved */ }
+  }
+}
+
+// Scroll to current time on calendar open
+function scrollCalToNow() {
+  const slots = document.getElementById('calInteractiveSlots');
+  if (!slots) return;
+  const now = new Date();
+  const y = timeToY2(now.getHours(), now.getMinutes());
+  slots.parentElement.parentElement.scrollTop = Math.max(y - 100, 0);
+}
+const CAL_START_HOUR = 6;  // 6 AM
+const CAL_END_HOUR   = 22; // 10 PM
+const HOUR_PX        = 56; // pixels per hour
+
+let calendarBlocked = []; // [{start:9, end:10, title:'Meeting'}]
+
+function timeToY(hour, minute=0) {
+  return ((hour - CAL_START_HOUR) + minute/60) * HOUR_PX;
+}
+
+function renderTimeline() {
+  const labels = document.getElementById('calHourLabels');
+  const slots  = document.getElementById('calSlots');
+  if (!labels || !slots) return;
+
+  const hours = [];
+  for (let h = CAL_START_HOUR; h <= CAL_END_HOUR; h++) hours.push(h);
+  const totalH = (CAL_END_HOUR - CAL_START_HOUR) * HOUR_PX;
+
+  // Hour labels
+  labels.innerHTML = hours.map(h => {
+    const label = h===0?'12AM':h<12?`${h}AM`:h===12?'12PM':`${h-12}PM`;
+    return `<div class="cal-hour-label">${label}</div>`;
+  }).join('');
+
+  // Hour lines
+  slots.style.height = totalH + 'px';
+  slots.style.position = 'relative';
+  slots.innerHTML = hours.map((h,i) => {
+    const now = new Date();
+    const isCurrent = h === now.getHours();
+    return `<div class="cal-hour-line ${isCurrent?'current-hour':''}" style="top:${i*HOUR_PX}px;position:absolute;left:0;right:0"></div>`;
+  }).join('');
+
+  // Now line
+  const now = new Date();
+  const nowY = timeToY(now.getHours(), now.getMinutes());
+  if (nowY >= 0 && nowY <= totalH) {
+    slots.innerHTML += `<div class="cal-now-line" style="top:${nowY}px"></div>`;
+  }
+
+  // Blocked slots from calendar screenshot
+  calendarBlocked.forEach(b => {
+    const y = timeToY(b.start);
+    const h = (b.end - b.start) * HOUR_PX;
+    if (y < 0 || h <= 0) return;
+    slots.innerHTML += `<div class="cal-block blocked" style="top:${y}px;height:${Math.max(h-2,20)}px">
+      🔒 ${b.title || 'Busy'}
+    </div>`;
+  });
+
+  // Task blocks
+  tasks.forEach(task => {
+    if (task.done) return;
+    let startH = null, startM = 0;
+    if (task.startTime) {
+      const [h,m] = task.startTime.split(':').map(Number);
+      startH = h; startM = m;
+    } else {
+      // Parse suggestedTimeBlock
+      const tb = task.suggestedTimeBlock || '';
+      const m = tb.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (m) {
+        startH = parseInt(m[1]);
+        startM = parseInt(m[2]);
+        const pm = m[3].toUpperCase()==='PM';
+        if (pm && startH!==12) startH+=12;
+        if (!pm && startH===12) startH=0;
+      }
+    }
+    if (startH === null) return;
+    const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0) || 30;
+    const y = timeToY(startH, startM);
+    const h = (totalMin/60) * HOUR_PX;
+    if (y < 0 || y > totalH) return;
+    slots.innerHTML += `<div class="cal-block ${task.category}" style="top:${y}px;height:${Math.max(h-3,24)}px" onclick="openTask(${task.id})">
+      <div style="font-weight:600;margin-bottom:1px">${task.title}</div>
+      <div style="font-size:10px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>
+    </div>`;
+  });
+}
+
+// ── GOOGLE CALENDAR SYNC ──────────────────────────────────────
+async function syncToGoogleCal() {
+  const nonWorkTasks = tasks.filter(t => t.category !== 'work' && !t.done);
+  if (!nonWorkTasks.length) { showToast('No personal tasks to sync.'); return; }
+
+  const btn = document.getElementById('gcalSyncBtn');
+  btn.disabled = true;
+  btn.textContent = 'Opening Google Calendar...';
+
+  // Build Google Calendar event links for each task
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0,10).replace(/-/g,'');
+
+  nonWorkTasks.forEach(task => {
+    let startH = 9, startM = 0;
+    if (task.startTime) {
+      [startH, startM] = task.startTime.split(':').map(Number);
+    } else {
+      const m = (task.suggestedTimeBlock||'').match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (m) {
+        startH = parseInt(m[1]); startM = parseInt(m[2]);
+        if (m[3].toUpperCase()==='PM' && startH!==12) startH+=12;
+        if (m[3].toUpperCase()==='AM' && startH===12) startH=0;
+      }
+    }
+    const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0) || 30;
+    const endH = Math.floor((startH*60+startM+totalMin)/60);
+    const endM = (startH*60+startM+totalMin)%60;
+
+    const fmt = (h,m) => `${dateStr}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
+    const details = encodeURIComponent(task.chunks.map((c,i)=>`${i+1}. ${c.title} (${c.duration}m)`).join('\n'));
+    const title = encodeURIComponent(task.title);
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(startH,startM)}/${fmt(endH,endM)}&details=${details}`;
+    setTimeout(() => window.open(url, '_blank'), nonWorkTasks.indexOf(task) * 800);
+  });
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Sync Personal Tasks to Google Calendar`;
+    showToast(`✓ ${nonWorkTasks.length} tasks opened in Google Calendar`);
+  }, nonWorkTasks.length * 800 + 500);
 }
 
 // ── ICS EXPORT ────────────────────────────────────────────────
