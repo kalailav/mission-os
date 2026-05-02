@@ -541,7 +541,97 @@
     .lock-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.6; }
     .lock-mode-toggle { background: none; border: none; color: var(--teal); font-size: 12px; cursor: pointer; margin-top: 10px; text-align: center; width: 100%; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
 
-    /* ── HEALTH LOG ── */
+    /* ── CHAT PANEL ── */
+    .chat-panel {
+      position: fixed; right: 0; top: 0; bottom: 0; width: 360px;
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 200;
+      transform: translateX(100%); transition: transform 0.25s ease;
+    }
+    .chat-panel.open { transform: translateX(0); }
+    @media (max-width: 768px) {
+      .chat-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); top: auto; height: 70vh; transform: translateY(100%); }
+      .chat-panel.open { transform: translateY(0); }
+    }
+    .chat-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .chat-header-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--amber); }
+    .chat-header-context { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .chat-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; padding: 4px; line-height: 1; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .chat-msg { max-width: 85%; padding: 10px 13px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+    .chat-msg.user { align-self: flex-end; background: var(--amber); color: #000; border-radius: 12px 12px 3px 12px; font-weight: 500; }
+    .chat-msg.assistant { align-self: flex-start; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 12px 12px 12px 3px; }
+    .chat-msg.assistant.thinking { color: var(--text-muted); font-style: italic; }
+    .chat-msg ul, .chat-msg ol { padding-left: 16px; margin-top: 6px; }
+    .chat-msg li { margin-bottom: 3px; }
+    .chat-msg strong { color: var(--amber); }
+    .chat-msg.assistant strong { color: var(--green); }
+    .chat-input-row {
+      padding: 12px; border-top: 1px solid var(--border); flex-shrink: 0;
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+    .chat-input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 10px 14px; outline: none; resize: none;
+      max-height: 100px; min-height: 40px; transition: border-color 0.2s; line-height: 1.4;
+    }
+    .chat-input:focus { border-color: var(--amber); }
+    .chat-input::placeholder { color: var(--text-dim); }
+    .chat-send-btn {
+      width: 38px; height: 38px; border-radius: 50%; background: var(--amber);
+      border: none; color: #000; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; transition: background 0.15s;
+    }
+    .chat-send-btn:hover { background: #d68e00; }
+    .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .chat-fab {
+      position: fixed; bottom: 80px; right: 16px; width: 52px; height: 52px;
+      border-radius: 50%; background: var(--amber); border: none; color: #000;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(245,158,11,0.4); z-index: 150;
+      transition: all 0.2s; font-size: 22px;
+    }
+    .chat-fab:hover { transform: scale(1.08); }
+    .chat-fab.health { background: var(--green); box-shadow: 0 4px 20px rgba(16,185,129,0.4); }
+    @media (min-width: 768px) {
+      .chat-fab { bottom: 24px; right: 24px; }
+    }
+    .chat-quick-btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+    .chat-quick-btn {
+      padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+      font-size: 11px; cursor: pointer; transition: all 0.15s;
+    }
+    .chat-quick-btn:hover { border-color: var(--amber); color: var(--amber); }
+    .chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 199; display: none; }
+    .chat-overlay.open { display: block; }
+
+    @media print {
+      .nav, .sidebar-nav, .header, .chat-fab, .chat-panel, .chat-overlay,
+      .lock-overlay, #healthInputCard, #healthTodayCard, .section-header button,
+      .filter-row, .capture-card, .settings-section, .primary-btn,
+      .action-btn, .icon-btn, .theme-toggle, #goalInputCard { display: none !important; }
+      body, .main { background: #fff !important; color: #000 !important; margin: 0; padding: 0; }
+      .main { margin-left: 0 !important; padding: 20px !important; }
+      .workout-card { border: 1px solid #ccc !important; border-radius: 6px; page-break-inside: avoid; margin-bottom: 16px; background: #fff !important; }
+      .workout-card::before { background: #333 !important; }
+      .workout-title { color: #000 !important; font-size: 16px !important; }
+      .workout-date { color: #555 !important; }
+      .workout-notes { color: #333 !important; }
+      .workout-rec { background: #f0f0f0 !important; border-color: #ccc !important; }
+      .workout-rec-label, .workout-rec { color: #333 !important; }
+      .print-header { display: block !important; }
+      button { display: none !important; }
+      #print-date-header { display: block !important; }
+    }
+    .print-header { display: none; }
+    #print-date-header { display: none; }
     .workout-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; position: relative; overflow: hidden; }
     .workout-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
     .workout-card.run::before { background: #f97316; }
@@ -1138,14 +1228,24 @@
     </div>
 
     <!-- Workout Log -->
+    <div id="print-date-header" style="display:none">
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px">Mission OS — Workout Log</div>
+      <div style="font-size:13px;color:#555;margin-bottom:20px">Printed: <span id="printDateStr"></span></div>
+    </div>
     <div class="section-header" style="margin-bottom:12px">
       <span class="section-title">Workout History</span>
-      <div style="display:flex;gap:6px">
-        <button class="filter-btn active" onclick="setHealthFilter('all',this)">All</button>
-        <button class="filter-btn" onclick="setHealthFilter('run',this)">Run</button>
-        <button class="filter-btn" onclick="setHealthFilter('strength',this)">Strength</button>
-        <button class="filter-btn" onclick="setHealthFilter('bike',this)">Bike</button>
-        <button class="filter-btn" onclick="setHealthFilter('yoga',this)">Yoga</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="printWorkouts()" style="padding:6px 12px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print
+        </button>
+        <div style="display:flex;gap:6px;overflow-x:auto">
+          <button class="filter-btn active" onclick="setHealthFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setHealthFilter('run',this)">Run</button>
+          <button class="filter-btn" onclick="setHealthFilter('strength',this)">Strength</button>
+          <button class="filter-btn" onclick="setHealthFilter('bike',this)">Bike</button>
+          <button class="filter-btn" onclick="setHealthFilter('yoga',this)">Yoga</button>
+        </div>
       </div>
     </div>
     <div id="health-log-list">
@@ -1307,6 +1407,42 @@
   </div>
 
 </div>
+
+<!-- CHAT OVERLAY -->
+<div class="chat-overlay" id="chatOverlay" onclick="closeChat()"></div>
+
+<!-- CHAT PANEL -->
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div>
+      <div class="chat-header-title" id="chatTitle">✦ Ask Claude</div>
+      <div class="chat-header-context" id="chatContext">Dashboard · Task & productivity help</div>
+    </div>
+    <button class="chat-close" onclick="closeChat()">×</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg assistant" id="chatWelcome">
+      Hi! I'm here to help. Ask me anything about your tasks, priorities, or what to focus on today.
+    </div>
+  </div>
+  <div class="chat-quick-btns" id="chatQuickBtns">
+    <button class="chat-quick-btn" onclick="sendQuickMessage('What should I focus on first today?')">Focus today?</button>
+    <button class="chat-quick-btn" onclick="sendQuickMessage('Summarize my top priorities')">Top priorities</button>
+    <button class="chat-quick-btn" onclick="sendQuickMessage('What tasks am I behind on?')">Behind on?</button>
+    <button class="chat-quick-btn" onclick="sendQuickMessage('Help me plan my week')">Plan week</button>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chatInput" placeholder="Ask Claude anything..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+    <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" title="Send">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- CHAT FAB -->
+<button class="chat-fab" id="chatFab" onclick="openChat()" title="Ask Claude">✦</button>
 
 <!-- BOTTOM NAV -->
 <nav class="nav">
@@ -1700,18 +1836,25 @@ async function unlockWithPassword(pass) {
     const el = document.getElementById('apiKeyInput');
     if (el) el.value = apiKey;
   }
-  // Auto-connect GAS if URL stored in vault
-  if (payload.gasUrl && payload.gasUrl.trim()) {
-    try {
-      await connectGAS(payload.gasUrl.trim());
-      const el = document.getElementById('gasUrlInput');
-      if (el) el.value = payload.gasUrl;
-    } catch(e) { console.error('GAS auto-connect failed:', e); }
-  }
 
-  // Hide lock screen and init app
+  // Hide lock screen immediately — don't block on GAS
   document.getElementById('lockOverlay').classList.add('hidden');
-  if (!gasConfigured) { seedDemo(); renderTasks(); renderTimeline(); renderBacklog(); }
+  seedDemo(); renderTasks(); renderTimeline(); renderBacklog(); renderGoals();
+
+  // Connect GAS in background after unlock
+  if (payload.gasUrl && payload.gasUrl.trim()) {
+    const el = document.getElementById('gasUrlInput');
+    if (el) el.value = payload.gasUrl;
+    setTimeout(async () => {
+      try {
+        await connectGAS(payload.gasUrl.trim());
+        showToast('🔗 Google Sheets connected!');
+      } catch(e) {
+        console.warn('GAS auto-connect failed:', e);
+        showToast('⚠️ Could not connect to Google Sheets — check Settings.');
+      }
+    }, 800);
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────
@@ -1822,6 +1965,7 @@ function switchView(view) {
   if (view === 'calendar') { renderCalendar2(); setTimeout(scrollCalToNow, 100); }
   if (view === 'timeline') renderTimeline();
   if (view === 'goals')    renderGoals();
+  updateChatFab(view);
   if (view === 'health') {
     renderWorkoutLog();
     loadFitnessGoals();
@@ -2490,7 +2634,206 @@ function renderBacklog() {
   }).join('');
 }
 
-// ── HEALTH LOG ────────────────────────────────────────────────
+// ── CHAT ──────────────────────────────────────────────────────
+let chatHistory = [];
+let chatContext = 'dashboard';
+let chatOpen = false;
+
+const CHAT_CONTEXTS = {
+  dashboard: {
+    title: '✦ Ask Claude',
+    subtitle: 'Dashboard · Task & productivity help',
+    fabClass: '',
+    system: () => `You are a personal productivity coach embedded in Mission OS, a personal life operating system.
+Current task queue (${tasks.length} tasks): ${tasks.slice(0,5).map(t=>`"${t.title}" (P${t.priorityScore}, ${t.category})`).join(', ')}
+Completed tasks today: ${tasks.filter(t=>t.done).length}
+Backlog: ${backlog.length} items
+Active goals: ${goals.length}
+Today's date: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+Help the user with task prioritization, planning, productivity advice, and decision-making. Be concise, direct, and actionable. Use bullet points for lists. Bold key recommendations.`,
+    quickBtns: [
+      { label: 'Focus today?', msg: 'What should I focus on first today?' },
+      { label: 'Top priorities', msg: 'Summarize my top 3 priorities right now' },
+      { label: 'Plan my week', msg: 'Help me plan the rest of my week' },
+      { label: 'I\'m overwhelmed', msg: 'I have too much on my plate. Help me decide what to drop or defer.' }
+    ],
+    welcome: 'Hi! I can see your task queue and priorities. Ask me anything about what to focus on, how to plan your day, or how to tackle what\'s on your plate.'
+  },
+  health: {
+    title: '💪 Health Coach',
+    subtitle: 'Health · Workout & wellness advice',
+    fabClass: 'health',
+    system: () => {
+      const fitnessGoals = localStorage.getItem('fitnessGoals') || 'General fitness and health.';
+      const recent = workoutLog.slice(0,5).map(w=>`${w.date}: ${w.title} (${w.type}, ${w.duration||'?'}min, effort:${w.effortScore||'?'}/10)`).join('\n') || 'No workouts logged yet.';
+      return `You are an expert fitness coach and health advisor embedded in Mission OS.
+User fitness goals: ${fitnessGoals}
+Recent workout history:
+${recent}
+Today: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+Give specific, actionable advice tailored to their goals and recent training. Be encouraging but honest. Bold key recommendations. Use bullet points for exercises (include sets/reps/duration).`;
+    },
+    quickBtns: [
+      { label: 'What to do today?', msg: 'Based on my recent workouts, what should I do today?' },
+      { label: 'Recovery tips', msg: 'How should I recover from my recent sessions?' },
+      { label: 'Improve my run', msg: 'Give me specific tips to improve my running performance' },
+      { label: 'Injury prevention', msg: 'What should I do to prevent injuries given my training?' },
+      { label: 'Nutrition today', msg: 'What should I eat today to support my training?' },
+      { label: 'Sleep advice', msg: 'How can I improve my sleep to boost recovery?' }
+    ],
+    welcome: 'Hi! I\'m your health coach. I can see your recent workouts and fitness goals. Ask me anything about training, recovery, nutrition, or how to adjust your plan.'
+  }
+};
+
+function openChat(context) {
+  context = context || chatContext;
+  chatContext = context;
+  const ctx = CHAT_CONTEXTS[context] || CHAT_CONTEXTS.dashboard;
+
+  // Update panel UI for context
+  document.getElementById('chatTitle').textContent = ctx.title;
+  document.getElementById('chatContext').textContent = ctx.subtitle;
+  const fab = document.getElementById('chatFab');
+  fab.className = 'chat-fab' + (ctx.fabClass ? ' ' + ctx.fabClass : '');
+
+  // Update quick buttons
+  const qb = document.getElementById('chatQuickBtns');
+  qb.innerHTML = ctx.quickBtns.map(b =>
+    `<button class="chat-quick-btn" onclick="sendQuickMessage('${b.msg.replace(/'/g,"\\'")}')">${b.label}</button>`
+  ).join('');
+
+  // Set welcome if fresh
+  if (chatHistory.length === 0 || chatHistory[0]?.context !== context) {
+    chatHistory = [{ role: 'context', context }];
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = `<div class="chat-msg assistant">${ctx.welcome}</div>`;
+  }
+
+  document.getElementById('chatPanel').classList.add('open');
+  document.getElementById('chatOverlay').classList.add('open');
+  chatOpen = true;
+  setTimeout(() => document.getElementById('chatInput').focus(), 300);
+
+  if (!apiKey) {
+    appendChatMsg('assistant', '⚠️ Add your Claude API key in Settings to enable chat.');
+  }
+}
+
+function closeChat() {
+  document.getElementById('chatPanel').classList.remove('open');
+  document.getElementById('chatOverlay').classList.remove('open');
+  chatOpen = false;
+}
+
+function sendQuickMessage(msg) {
+  document.getElementById('chatInput').value = msg;
+  sendChatMessage();
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (!apiKey) { appendChatMsg('assistant', '⚠️ Add your Claude API key in Settings to chat.'); return; }
+
+  input.value = '';
+  input.style.height = '40px';
+  appendChatMsg('user', msg);
+
+  // Add to history
+  chatHistory.push({ role: 'user', content: msg });
+
+  // Thinking indicator
+  const thinkingId = 'think_' + Date.now();
+  appendChatMsg('assistant thinking', '...', thinkingId);
+
+  const btn = document.getElementById('chatSendBtn');
+  btn.disabled = true;
+
+  try {
+    const ctx = CHAT_CONTEXTS[chatContext] || CHAT_CONTEXTS.dashboard;
+    const messages = chatHistory
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({ role: m.role, content: m.content }));
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: activeModel,
+        max_tokens: 1000,
+        system: ctx.system(),
+        messages
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const reply = data.content[0].text;
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    // Remove thinking, add real response
+    const thinkEl = document.getElementById(thinkingId);
+    if (thinkEl) thinkEl.remove();
+    appendChatMsg('assistant', formatChatMsg(reply));
+
+  } catch(e) {
+    const thinkEl = document.getElementById(thinkingId);
+    if (thinkEl) thinkEl.remove();
+    appendChatMsg('assistant', `Error: ${e.message}`);
+  }
+
+  btn.disabled = false;
+}
+
+function appendChatMsg(type, content, id) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + type;
+  if (id) div.id = id;
+  div.innerHTML = content;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function formatChatMsg(text) {
+  // Convert markdown-like syntax to HTML
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^### (.*)/gm, '<div style="font-weight:600;color:var(--amber);margin-top:8px">$1</div>')
+    .replace(/^## (.*)/gm, '<div style="font-weight:600;color:var(--amber);margin-top:8px">$1</div>')
+    .replace(/^# (.*)/gm, '<div style="font-weight:600;color:var(--amber);margin-top:8px">$1</div>')
+    .replace(/^- (.*)/gm, '<div style="display:flex;gap:6px;margin-top:3px"><span>•</span><span>$1</span></div>')
+    .replace(/^\d+\. (.*)/gm, '<div style="display:flex;gap:6px;margin-top:3px"><span style="color:var(--amber)">→</span><span>$1</span></div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+// Update FAB based on current view
+function updateChatFab(view) {
+  const fab = document.getElementById('chatFab');
+  if (view === 'health') {
+    fab.className = 'chat-fab health';
+    fab.title = 'Ask Health Coach';
+    fab.onclick = () => openChat('health');
+  } else {
+    fab.className = 'chat-fab';
+    fab.title = 'Ask Claude';
+    fab.onclick = () => openChat('dashboard');
+  }
+}
+
+// Expose for onclick in dynamically rendered HTML
+// Note: assign to temp vars first to avoid self-referencing recursion
+const _openChat = openChat;
+const _closeChat = closeChat;
+const _sendQuickMessage = sendQuickMessage;
+const _sendChatMessage = sendChatMessage;
+window.openChat = function(c) { return _openChat(c); };
+window.closeChat = function() { return _closeChat(); };
+window.sendQuickMessage = function(m) { return _sendQuickMessage(m); };
+window.sendChatMessage = function() { return _sendChatMessage(); };
 let workoutLog = [];
 let healthFilter = 'all';
 let healthImageBase64 = null;
@@ -2585,6 +2928,9 @@ Based on my recent training load, recovery scores, and fitness goals, give me a 
       </div>
       <button onclick="addWorkoutToCalendar(${JSON.stringify(rec.workout||{}).replace(/"/g,'&quot;')})" style="margin-top:12px;width:100%;padding:9px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);color:var(--green);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">
         📅 Add to Today's Calendar
+      </button>
+      <button onclick="openChat('health')" style="margin-top:8px;width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">
+        💬 Discuss with Health Coach
       </button>`;
 
     // Save to localStorage so it persists until tomorrow
@@ -2844,9 +3190,11 @@ function renderWorkoutLog() {
   const typeEmoji = {run:'🏃',strength:'🏋️',bike:'🚴',yoga:'🧘',hiit:'⚡',walk:'🚶',other:'💪'};
   container.innerHTML = filtered.map(w => {
     const metrics = Object.entries(w.metrics||{}).filter(([,v])=>v).map(([k,v])=>`<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">${k}: <strong style="color:var(--text)">${v}</strong></span>`).join(' · ');
-    const recs = (w.recommendations||[]).slice(0,1).map(r=>`
-      <div class="workout-rec"><div class="workout-rec-label">↗ Recommendation</div>${r.title}: ${r.detail}</div>`).join('');
-    return `<div class="workout-card ${w.type||'other'}">
+    const recs = (w.recommendations||[]).map(r=>`
+      <div class="workout-rec" style="margin-bottom:6px"><div class="workout-rec-label">↗ ${r.title}</div>${r.detail}</div>`).join('');
+    const highlights = (w.highlights||[]).map(h=>`<div style="display:flex;gap:5px;font-size:12px;color:var(--text-muted);margin-bottom:2px"><span style="color:var(--green)">✓</span><span>${h}</span></div>`).join('');
+    const warnings = (w.areasToWatch||[]).map(h=>`<div style="display:flex;gap:5px;font-size:12px;color:var(--text-muted);margin-bottom:2px"><span style="color:var(--amber)">⚠</span><span>${h}</span></div>`).join('');
+    return `<div class="workout-card ${w.type||'other'}" id="wcard_${w.id}">
       <div class="workout-header">
         <div>
           <div class="workout-title">${typeEmoji[w.type]||'💪'} ${w.title||'Workout'}</div>
@@ -2857,11 +3205,14 @@ function renderWorkoutLog() {
             <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber);line-height:1">${w.effortScore||'—'}</div>
             <div style="font-size:9px;color:var(--text-muted)">EFFORT</div>
           </div>
+          <button onclick="printSingleWorkout(${w.id})" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;transition:all 0.15s" title="Print" onmouseover="this.style.color='var(--amber)';this.style.borderColor='var(--amber)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">🖨</button>
           <button onclick="deleteWorkout(${w.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px">✕</button>
         </div>
       </div>
       ${metrics ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">${metrics}</div>` : ''}
       ${w.summary ? `<div class="workout-notes">${w.summary}</div>` : ''}
+      ${highlights ? `<div style="margin-bottom:8px">${highlights}</div>` : ''}
+      ${warnings   ? `<div style="margin-bottom:8px">${warnings}</div>` : ''}
       ${recs}
     </div>`;
   }).join('');
@@ -2874,6 +3225,69 @@ function deleteWorkout(id) {
   renderWorkoutLog();
   showToast('Workout removed.');
 }
+
+function printWorkouts() {
+  const dateEl = document.getElementById('printDateStr');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hdr = document.getElementById('print-date-header');
+  if (hdr) hdr.style.display = 'block';
+  window.print();
+  setTimeout(() => { if (hdr) hdr.style.display = 'none'; }, 1000);
+}
+
+function printSingleWorkout(id) {
+  const w = workoutLog.find(x=>x.id===id);
+  if (!w) return;
+  const typeEmoji = {run:'🏃',strength:'🏋️',bike:'🚴',yoga:'🧘',hiit:'⚡',walk:'🚶',other:'💪'};
+  const metrics = Object.entries(w.metrics||{}).filter(([,v])=>v).map(([k,v])=>`<tr><td style="padding:4px 8px;color:#555;font-size:13px">${k}</td><td style="padding:4px 8px;font-weight:600;font-size:13px">${v}</td></tr>`).join('');
+  const highlights = (w.highlights||[]).map(h=>`<li style="color:#333;font-size:13px">✓ ${h}</li>`).join('');
+  const warnings = (w.areasToWatch||[]).map(h=>`<li style="color:#666;font-size:13px">⚠ ${h}</li>`).join('');
+  const recs = (w.recommendations||[]).map((r,i)=>`<div style="margin-bottom:10px;padding:10px;background:#f5f5f5;border-radius:6px;border-left:3px solid #10B981"><div style="font-weight:600;font-size:13px;margin-bottom:3px">${i+1}. ${r.title}</div><div style="font-size:12px;color:#555;line-height:1.6">${r.detail}</div></div>`).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <title>Workout — ${w.title||'Session'}</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; color: #111; }
+      h1 { font-size: 24px; margin-bottom: 4px; }
+      .meta { color: #555; font-size: 14px; margin-bottom: 20px; }
+      .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin: 16px 0 8px; font-weight: 600; }
+      table { border-collapse: collapse; background: #f9f9f9; border-radius: 6px; width: auto; margin-bottom: 16px; }
+      .scores { display: flex; gap: 16px; margin-bottom: 16px; }
+      .score-box { text-align: center; padding: 10px 20px; background: #f5f5f5; border-radius: 6px; }
+      .score-val { font-size: 28px; font-weight: 700; }
+      .score-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+      ul { margin: 0; padding-left: 16px; }
+      li { margin-bottom: 4px; }
+      .summary { font-style: italic; color: #444; font-size: 14px; line-height: 1.6; padding: 12px; background: #f9f9f9; border-radius: 6px; margin-bottom: 16px; }
+      @media print { body { margin: 20px; } }
+    </style>
+  </head><body>
+    <div style="font-size:12px;color:#888;margin-bottom:4px">MISSION OS · WORKOUT REPORT</div>
+    <h1>${typeEmoji[w.type]||'💪'} ${w.title||'Workout'}</h1>
+    <div class="meta">${w.date} &nbsp;·&nbsp; ${w.duration||'?'} minutes &nbsp;·&nbsp; ${w.type||'General'}</div>
+    <div class="scores">
+      <div class="score-box"><div class="score-val" style="color:#F59E0B">${w.effortScore||'—'}/10</div><div class="score-label">Effort</div></div>
+      <div class="score-box"><div class="score-val" style="color:#0D9488">${w.recoveryScore||'—'}/10</div><div class="score-label">Recovery Need</div></div>
+    </div>
+    ${metrics ? `<div class="section-title">Metrics</div><table>${metrics}</table>` : ''}
+    ${w.summary ? `<div class="section-title">Summary</div><div class="summary">${w.summary}</div>` : ''}
+    ${highlights ? `<div class="section-title">Highlights</div><ul style="margin-bottom:16px">${highlights}</ul>` : ''}
+    ${warnings ? `<div class="section-title">Areas to Watch</div><ul style="margin-bottom:16px">${warnings}</ul>` : ''}
+    ${recs ? `<div class="section-title">Recommendations</div>${recs}` : ''}
+    <div style="margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#aaa">
+      Printed from Mission OS &nbsp;·&nbsp; ${new Date().toLocaleDateString()}
+    </div>
+    <scr"+"ipt>window.onload=function(){window.print();}</scr"+"ipt>
+  </body></html>`);
+  win.document.close();
+}
+const _printSingleWorkout = printSingleWorkout;
+const _printWorkouts = printWorkouts;
+const _deleteWorkout = deleteWorkout;
+window.printSingleWorkout = function(id) { return _printSingleWorkout(id); };
+window.printWorkouts = function() { return _printWorkouts(); };
+window.deleteWorkout = function(id) { return _deleteWorkout(id); };
 
 // ── GOALS ─────────────────────────────────────────────────────
 let goals = [];
