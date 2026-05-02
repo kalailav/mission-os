@@ -56,6 +56,7 @@
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
+      font-size: 17px;
     }
     body::before {
       content: '';
@@ -87,7 +88,7 @@
       font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
     }
     .nav-btn.active { color: var(--amber); }
-    .nav-btn svg { width: 22px; height: 22px; }
+    .nav-btn svg { width: 24px; height: 24px; }
 
     /* ── HEADER ── */
     .header {
@@ -149,7 +150,7 @@
     .task-card.done .task-title { text-decoration: line-through; }
     .task-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
     .task-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
-    .task-title { font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--text); }
+    .task-title { font-size: 16px; font-weight: 500; line-height: 1.4; color: var(--text); }
     .priority-score { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1; min-width: 30px; text-align: right; }
     .score-high { color: var(--red); }
     .score-med  { color: var(--amber); }
@@ -176,7 +177,7 @@
     textarea, input[type="text"], input[type="password"] {
       width: 100%; background: var(--surface2); border: 1px solid var(--border);
       border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif;
-      font-size: 14px; padding: 12px; resize: none; outline: none; transition: border-color 0.2s;
+      font-size: 16px; padding: 13px; resize: none; outline: none; transition: border-color 0.2s;
     }
     textarea:focus, input:focus { border-color: var(--amber); }
     textarea::placeholder, input::placeholder { color: var(--text-dim); }
@@ -337,8 +338,8 @@
     .sidebar-nav-btn {
       display: flex; align-items: center; gap: 12px;
       background: none; border: none; color: var(--text-muted);
-      cursor: pointer; padding: 13px 24px; width: 100%;
-      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      cursor: pointer; padding: 14px 24px; width: 100%;
+      font-family: 'DM Sans', sans-serif; font-size: 16px;
       transition: all 0.15s; text-align: left;
     }
     .sidebar-nav-btn:hover { background: var(--surface2); color: var(--text); }
@@ -540,6 +541,33 @@
     .lock-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.6; }
     .lock-mode-toggle { background: none; border: none; color: var(--teal); font-size: 12px; cursor: pointer; margin-top: 10px; text-align: center; width: 100%; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
 
+    /* ── HEALTH LOG ── */
+    .workout-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; position: relative; overflow: hidden; }
+    .workout-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .workout-card.run::before { background: #f97316; }
+    .workout-card.strength::before { background: var(--indigo); }
+    .workout-card.bike::before { background: var(--teal); }
+    .workout-card.yoga::before { background: var(--green); }
+    .workout-card.hiit::before { background: var(--red); }
+    .workout-card.walk::before { background: #84cc16; }
+    .workout-card.other::before { background: var(--text-muted); }
+    .workout-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+    .workout-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .workout-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+    .workout-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .workout-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; text-align: center; }
+    .workout-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--green); line-height: 1; }
+    .workout-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .workout-notes { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+    .workout-rec { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 6px; padding: 10px 12px; font-size: 12px; color: var(--green); line-height: 1.6; }
+    .workout-rec-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--green); margin-bottom: 4px; font-weight: 600; }
+    .health-analysis-block { margin-bottom: 12px; }
+    .health-analysis-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+    .health-stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+    .health-stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+    .health-stat-box-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--green); line-height: 1; }
+    .health-stat-box-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+
     /* ── GOALS ── */
     .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
     .goal-card-header { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
@@ -724,6 +752,10 @@
   <button class="sidebar-nav-btn" id="snav-calendar" onclick="switchView('calendar')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
     Calendar
+  </button>
+  <button class="sidebar-nav-btn" id="snav-health" onclick="switchView('health')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+    Health
   </button>
   <button class="sidebar-nav-btn" id="snav-goals" onclick="switchView('goals')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1010,6 +1042,120 @@
     </div>
   </div>
 
+  <!-- ── HEALTH ── -->
+  <div id="view-health" class="view">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">💪 Health Log</span>
+      <span class="badge badge-green" id="health-count-badge">0 sessions</span>
+    </div>
+
+    <!-- Today's Recommendation -->
+    <div class="capture-card" id="healthTodayCard" style="border-color:rgba(16,185,129,0.3);margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--green)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--green)">Today's Recommendation</span>
+        </div>
+        <button onclick="getTodayRecommendation()" id="todayRecBtn" style="padding:6px 12px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:20px;color:var(--green);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s">
+          ↻ Refresh
+        </button>
+      </div>
+      <div id="todayRecContent">
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.6">
+          Tap <strong style="color:var(--green)">Refresh</strong> to get Claude's recommendation for today based on your recent workouts and fitness goals.
+        </div>
+      </div>
+      <div id="todayRecLoading" style="display:none">
+        <div class="loading-indicator"><div class="spinner"></div>Claude is analyzing your history...</div>
+      </div>
+    </div>
+
+    <!-- Input Card -->
+    <div class="capture-card" id="healthInputCard">
+      <div class="capture-label">Log a Workout</div>
+
+      <!-- Camera upload -->
+      <label class="cal-upload-btn" for="healthImageInput" style="margin-bottom:10px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        📷 Take or Upload Workout Photo / Screenshot
+      </label>
+      <input type="file" id="healthImageInput" accept="image/*" capture="environment" style="display:none" onchange="handleHealthImage(event)">
+      <div id="healthImagePreview" style="display:none;margin-bottom:10px">
+        <img id="healthImageThumb" style="max-height:120px;border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--green);margin-top:4px">✓ Image loaded — Claude will analyze it</div>
+      </div>
+
+      <!-- Voice -->
+      <button class="voice-btn" id="healthVoiceBtn" onclick="toggleHealthVoice()" style="margin-bottom:10px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/></svg>
+        <span id="healthVoiceBtnText">🎙 Speak your workout details</span>
+      </button>
+
+      <!-- Text area -->
+      <textarea id="healthTextInput" rows="4" placeholder="Or type / paste your workout details...&#10;e.g. 45 min run at 5:30 pace, 3x10 squats at 80kg, felt strong, slight knee tightness"></textarea>
+
+      <!-- Date -->
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+        <div style="flex:1">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Date</div>
+          <input type="date" id="healthDate" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px;outline:none;color-scheme:dark">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Type</div>
+          <select id="healthType" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px;outline:none">
+            <option value="run">🏃 Run</option>
+            <option value="strength">🏋️ Strength</option>
+            <option value="bike">🚴 Bike</option>
+            <option value="yoga">🧘 Yoga</option>
+            <option value="hiit">⚡ HIIT</option>
+            <option value="walk">🚶 Walk</option>
+            <option value="other">💪 Other</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="primary-btn" style="margin-top:12px;background:var(--green);color:#000" onclick="analyzeWorkout()" id="analyzeWorkoutBtn">
+        ✦ Analyze Workout + Get Recommendations
+      </button>
+      <div id="healthLoadingIndicator" style="display:none">
+        <div class="loading-indicator"><div class="spinner"></div>Claude is analyzing your workout...</div>
+      </div>
+    </div>
+
+    <!-- Analysis Result -->
+    <div id="healthAnalysisPanel" style="display:none;margin-bottom:16px">
+      <div class="capture-card" style="border-color:rgba(16,185,129,0.3)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--green)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--green)">Workout Analysis</span>
+        </div>
+        <div id="healthAnalysisContent"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="action-btn action-btn-secondary" onclick="discardHealthAnalysis()">Discard</button>
+          <button class="action-btn action-btn-primary" style="background:var(--green);flex:1" onclick="saveWorkout()">✓ Save to Log</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workout Log -->
+    <div class="section-header" style="margin-bottom:12px">
+      <span class="section-title">Workout History</span>
+      <div style="display:flex;gap:6px">
+        <button class="filter-btn active" onclick="setHealthFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setHealthFilter('run',this)">Run</button>
+        <button class="filter-btn" onclick="setHealthFilter('strength',this)">Strength</button>
+        <button class="filter-btn" onclick="setHealthFilter('bike',this)">Bike</button>
+        <button class="filter-btn" onclick="setHealthFilter('yoga',this)">Yoga</button>
+      </div>
+    </div>
+    <div id="health-log-list">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        <p>No workouts logged yet.<br>Upload a photo, speak, or type to log your first session.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ── GOALS ── -->
   <div id="view-goals" class="view">
     <div class="section-header" style="margin-bottom:16px">
@@ -1096,8 +1242,30 @@
     </div>
 
     <div class="settings-section">
-      <div class="settings-title">Model</div>
+      <div class="settings-title">Display</div>
       <div class="settings-row">
+        <label>Font Size</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+          <span style="font-size:12px;color:var(--text-muted)">A</span>
+          <input type="range" id="fontSizeSlider" min="14" max="22" step="1" value="17"
+            style="flex:1;accent-color:var(--amber);cursor:pointer"
+            oninput="applyFontSize(this.value)">
+          <span style="font-size:20px;color:var(--text-muted)">A</span>
+        </div>
+        <div style="text-align:center;margin-top:6px">
+          <span id="fontSizeLabel" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber)">17px</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="applyFontSize(14);document.getElementById('fontSizeSlider').value=14" class="action-btn action-btn-secondary" style="flex:1;padding:8px;font-size:12px">Small</button>
+          <button onclick="applyFontSize(17);document.getElementById('fontSizeSlider').value=17" class="action-btn action-btn-secondary" style="flex:1;padding:8px;font-size:14px">Medium</button>
+          <button onclick="applyFontSize(20);document.getElementById('fontSizeSlider').value=20" class="action-btn action-btn-secondary" style="flex:1;padding:8px;font-size:17px">Large</button>
+          <button onclick="applyFontSize(22);document.getElementById('fontSizeSlider').value=22" class="action-btn action-btn-secondary" style="flex:1;padding:8px;font-size:19px">XL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Model</div>      <div class="settings-row">
         <label>Active Model</label>
         <select id="modelSelect" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px;outline:none">
           <option value="claude-sonnet-4-5">Claude Sonnet 4.6 (Recommended)</option>
@@ -1119,8 +1287,17 @@
     </div>
 
     <div class="settings-section">
-      <div class="settings-title">About</div>
+      <div class="settings-title">💪 Fitness Goals</div>
       <div class="settings-row">
+        <label>Your Fitness Goals — Claude uses this for workout recommendations</label>
+        <textarea id="fitnessGoalsInput" rows="5" placeholder="e.g. I want to run a half marathon by December, improve sleep quality, lose 5kg, build core strength. I currently run 3x per week and do yoga on weekends. I have hip and hamstring tightness issues..."></textarea>
+        <button class="primary-btn" style="margin-top:10px;background:var(--green);color:#000" onclick="saveFitnessGoals()">Save Fitness Goals</button>
+        <div id="fitnessGoalsSaved" style="font-size:12px;color:var(--green);margin-top:6px;display:none">✓ Saved — Claude will use this for all workout recommendations.</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">About</div>      <div class="settings-row">
         <div style="font-size:13px;color:var(--text-muted);line-height:1.7">
           <strong style="color:var(--text)">Mission OS</strong> — Personal life operating system.<br><br>
           Voice or text capture → Claude scores urgency + importance → chunks into 30–90 min blocks → syncs to your day view → exports work tasks as ICS for Outlook.
@@ -1144,6 +1321,10 @@
   <button class="nav-btn" id="nav-calendar" onclick="switchView('calendar')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
     Calendar
+  </button>
+  <button class="nav-btn" id="nav-health" onclick="switchView('health')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+    Health
   </button>
   <button class="nav-btn" id="nav-goals" onclick="switchView('goals')">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1190,6 +1371,14 @@ let syncInterval = null;
 // ── GAS SYNC FUNCTIONS ────────────────────────────────────────
 async function gasGet(action) {
   const url = `${gasUrl}?action=${action}&t=${Date.now()}`;
+  const res = await fetch(url, { redirect: 'follow' });
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
+async function gasGetWithParams(params) {
+  const qs = Object.entries(params).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  const url = `${gasUrl}?${qs}&t=${Date.now()}`;
   const res = await fetch(url, { redirect: 'follow' });
   const text = await res.text();
   return JSON.parse(text);
@@ -1245,18 +1434,57 @@ async function gasDeleteGoal(id) {
   catch(e) { console.error('GAS delete goal error:', e); }
 }
 
+async function gasSaveWorkout(workout) {
+  if (!gasConfigured) return;
+  try { await gasPost({ action: 'saveWorkout', data: workout }); }
+  catch(e) { console.error('GAS save workout error:', e); }
+}
+
+async function gasDeleteWorkout(id) {
+  if (!gasConfigured) return;
+  try { await gasPost({ action: 'deleteWorkout', id }); }
+  catch(e) { console.error('GAS delete workout error:', e); }
+}
+
+async function gasSaveSetting(key, value) {
+  if (!gasConfigured) return;
+  try { await gasPost({ action: 'setSetting', key, value }); }
+  catch(e) { console.error('GAS save setting error:', e); }
+}
+
+async function gasGetSetting(key) {
+  if (!gasConfigured) return null;
+  try {
+    const res = await gasGetWithParams({ action: 'getSetting', key });
+    return res.value || null;
+  } catch(e) { return null; }
+}
+
 async function gasPullAll() {
   if (!gasConfigured) return;
   try {
-    const [t, b, g] = await Promise.all([
+    const [t, b, g, w] = await Promise.all([
       gasGet('getTasks'),
       gasGet('getBacklog'),
-      gasGet('getGoals')
+      gasGet('getGoals'),
+      gasGet('getWorkouts')
     ]);
     if (Array.isArray(t)) { tasks = t.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
     if (Array.isArray(b)) { backlog = b; renderBacklog(); }
     if (Array.isArray(g)) { goals = g; renderGoals(); }
+    if (Array.isArray(w)) {
+      workoutLog = w.sort((a,b) => new Date(b.loggedAt||b.date) - new Date(a.loggedAt||a.date));
+      localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
+      renderWorkoutLog();
+    }
     updateStats();
+    // Also pull fitness goals setting
+    const fg = await gasGetSetting('fitnessGoals');
+    if (fg) {
+      localStorage.setItem('fitnessGoals', fg);
+      const el = document.getElementById('fitnessGoalsInput');
+      if (el) el.value = fg;
+    }
   } catch(e) { console.error('GAS pull error:', e); }
 }
 
@@ -1492,6 +1720,8 @@ function init() {
   document.getElementById('currentDate').textContent =
     d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
   loadGoals();
+  loadWorkoutLog();
+  loadFitnessGoals();
   loadSavedSettings();
   checkVaultExists();
 }
@@ -1569,12 +1799,14 @@ async function unlockWithPass() {
 }
 
 function loadSavedSettings() {
-  const savedKey = localStorage.getItem('claudeApiKey');
-  const savedModel = localStorage.getItem('claudeModel');
+  const savedKey    = localStorage.getItem('claudeApiKey');
+  const savedModel  = localStorage.getItem('claudeModel');
   const savedGasUrl = localStorage.getItem('gasUrl');
-  if (savedKey) { apiKey = savedKey; const el = document.getElementById('apiKeyInput'); if (el) el.value = savedKey; }
-  if (savedModel) { activeModel = savedModel; const el = document.getElementById('modelSelect'); if (el) el.value = savedModel; }
-  if (savedGasUrl) { const el = document.getElementById('gasUrlInput'); if (el) el.value = savedGasUrl; }
+  const savedSize   = localStorage.getItem('fontSize');
+  if (savedKey)    { apiKey = savedKey;       const el = document.getElementById('apiKeyInput');  if (el) el.value = savedKey; }
+  if (savedModel)  { activeModel = savedModel; const el = document.getElementById('modelSelect');  if (el) el.value = savedModel; }
+  if (savedGasUrl) {                           const el = document.getElementById('gasUrlInput');  if (el) el.value = savedGasUrl; }
+  if (savedSize)   applyFontSize(savedSize);
 }
 
 // ── NAV ───────────────────────────────────────────────────────
@@ -1589,7 +1821,25 @@ function switchView(view) {
   if (sb) sb.classList.add('active');
   if (view === 'calendar') { renderCalendar2(); setTimeout(scrollCalToNow, 100); }
   if (view === 'timeline') renderTimeline();
-  if (view === 'goals') renderGoals();
+  if (view === 'goals')    renderGoals();
+  if (view === 'health') {
+    renderWorkoutLog();
+    loadFitnessGoals();
+    const dateEl = document.getElementById('healthDate');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+    // Auto-generate today's rec if not already done today
+    let alreadyDone = false;
+    try {
+      const cached = localStorage.getItem('todayRec');
+      if (cached) {
+        const { date } = JSON.parse(cached);
+        if (date === new Date().toDateString()) alreadyDone = true;
+      }
+    } catch(e) {}
+    if (!alreadyDone && apiKey && (workoutLog.length > 0 || localStorage.getItem('fitnessGoals'))) {
+      setTimeout(getTodayRecommendation, 300);
+    }
+  }
 }
 
 // ── FILTER ───────────────────────────────────────────────────
@@ -2238,6 +2488,391 @@ function renderBacklog() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ── HEALTH LOG ────────────────────────────────────────────────
+let workoutLog = [];
+let healthFilter = 'all';
+let healthImageBase64 = null;
+let healthImageType = null;
+let healthVoiceRec = null;
+let pendingWorkout = null;
+
+async function getTodayRecommendation() {
+  const btn = document.getElementById('todayRecBtn');
+  const content = document.getElementById('todayRecContent');
+  const loading = document.getElementById('todayRecLoading');
+
+  if (!apiKey) {
+    content.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">Add your Claude API key in Settings to get daily recommendations.</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  const fitnessGoals = localStorage.getItem('fitnessGoals') || 'General fitness and health.';
+  const recentWorkouts = workoutLog.slice(0,7).map(w =>
+    `${w.date} — ${w.title} (${w.type}, ${w.duration||'?'}min, effort:${w.effortScore||'?'}/10, recovery:${w.recoveryScore||'?'}/10)`
+  ).join('\n') || 'No workouts logged yet.';
+
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const prompt = `Today is ${today}.
+
+My fitness goals: ${fitnessGoals}
+
+My recent workout history (last 7 sessions):
+${recentWorkouts}
+
+Based on my recent training load, recovery scores, and fitness goals, give me a specific recommendation for what I should do today. Return ONLY JSON:
+{
+  "todayFocus": "Rest / Light Recovery / Moderate Training / Hard Training",
+  "headline": "One punchy sentence of what to do today",
+  "workout": {
+    "type": "run/strength/yoga/rest/walk/hiit",
+    "title": "Specific workout name",
+    "duration": 45,
+    "description": "Detailed description of exactly what to do",
+    "exercises": ["exercise 1 with sets/reps/duration", "exercise 2"]
+  },
+  "reasoning": "2-3 sentences explaining why this is the right choice today based on recent history",
+  "nutritionTip": "One specific nutrition tip for today",
+  "recoveryTip": "One specific recovery or sleep tip"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: activeModel, max_tokens: 800, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const rec = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+
+    const focusColor = rec.todayFocus?.includes('Rest') ? 'var(--teal)' :
+                       rec.todayFocus?.includes('Light') ? 'var(--green)' :
+                       rec.todayFocus?.includes('Hard') ? 'var(--red)' : 'var(--amber)';
+
+    const exercisesHtml = (rec.workout?.exercises||[]).map(e =>
+      `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-light)">
+        <span style="color:var(--green);font-size:13px">→</span>
+        <span style="font-size:13px;color:var(--text)">${e}</span>
+      </div>`
+    ).join('');
+
+    content.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:14px;padding:4px 12px;background:${focusColor}22;border:1px solid ${focusColor}44;border-radius:20px;color:${focusColor}">${rec.todayFocus||'Training Day'}</span>
+        <span style="font-size:13px;color:var(--text-muted)">Today · ${rec.workout?.duration||'?'}min</span>
+      </div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.3">${rec.headline||''}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--green);margin-bottom:6px;letter-spacing:0.5px">${rec.workout?.title||''}</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">${rec.workout?.description||''}</div>
+      ${exercisesHtml ? `<div style="margin-bottom:12px">${exercisesHtml}</div>` : ''}
+      <div style="font-size:12px;color:var(--text-muted);font-style:italic;line-height:1.6;padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:10px">${rec.reasoning||''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="padding:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--amber);margin-bottom:4px">🥗 Nutrition</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.5">${rec.nutritionTip||''}</div>
+        </div>
+        <div style="padding:10px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--indigo);margin-bottom:4px">😴 Recovery</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.5">${rec.recoveryTip||''}</div>
+        </div>
+      </div>
+      <button onclick="addWorkoutToCalendar(${JSON.stringify(rec.workout||{}).replace(/"/g,'&quot;')})" style="margin-top:12px;width:100%;padding:9px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);color:var(--green);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">
+        📅 Add to Today's Calendar
+      </button>`;
+
+    // Save to localStorage so it persists until tomorrow
+    localStorage.setItem('todayRec', JSON.stringify({ date: new Date().toDateString(), rec }));
+
+  } catch(e) {
+    content.innerHTML = `<div style="font-size:13px;color:var(--red)">Error: ${e.message}</div>`;
+  }
+
+  loading.style.display = 'none';
+  content.style.display = 'block';
+  btn.disabled = false;
+}
+
+function addWorkoutToCalendar(workout) {
+  if (!workout || !workout.title) { showToast('No workout to add.'); return; }
+  const task = {
+    id: Date.now(),
+    title: workout.title,
+    rawInput: workout.description || workout.title,
+    category: 'health',
+    urgencyScore: 6, importanceScore: 8, priorityScore: 7,
+    chunks: (workout.exercises||[]).length > 0
+      ? workout.exercises.map(e => ({ title: e, duration: Math.round((workout.duration||45)/(workout.exercises.length||1)), description: e }))
+      : [{ title: workout.title, duration: workout.duration||45, description: workout.description||'' }],
+    suggestedTimeBlock: '7:00 AM - 8:00 AM',
+    startTime: '07:00', endTime: '08:00',
+    taskDate: new Date().toDateString(),
+    note: 'Claude health recommendation',
+    userNotes: '', done: false, chunksCompleted: 0
+  };
+  if (gasConfigured) gasSaveTask(task);
+  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); }
+  showToast('✓ Workout added to today\'s calendar!');
+}
+
+function loadTodayRec() {
+  try {
+    const saved = localStorage.getItem('todayRec');
+    if (!saved) return;
+    const { date, rec } = JSON.parse(saved);
+    if (date !== new Date().toDateString()) return;
+    const btn = document.getElementById('todayRecBtn');
+    if (btn) btn.click();
+  } catch(e) {}
+}
+
+function saveFitnessGoals() {
+  const val = document.getElementById('fitnessGoalsInput').value.trim();
+  localStorage.setItem('fitnessGoals', val);
+  if (gasConfigured) gasSaveSetting('fitnessGoals', val);
+  const saved = document.getElementById('fitnessGoalsSaved');
+  saved.style.display = 'block';
+  setTimeout(() => saved.style.display = 'none', 3000);
+  showToast('✓ Fitness goals saved.');
+}
+
+function loadFitnessGoals() {
+  const saved = localStorage.getItem('fitnessGoals');
+  if (saved) {
+    const el = document.getElementById('fitnessGoalsInput');
+    if (el) el.value = saved;
+  }
+}
+
+function handleHealthImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    healthImageBase64 = e.target.result.split(',')[1];
+    healthImageType = file.type;
+    document.getElementById('healthImageThumb').src = e.target.result;
+    document.getElementById('healthImagePreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleHealthVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice not supported — try Chrome.'); return; }
+  if (healthVoiceRec) { healthVoiceRec.stop(); return; }
+  healthVoiceRec = new SR();
+  healthVoiceRec.continuous = true;
+  healthVoiceRec.interimResults = true;
+  healthVoiceRec.lang = 'en-US';
+  healthVoiceRec.onstart = () => {
+    document.getElementById('healthVoiceBtn').classList.add('recording');
+    document.getElementById('healthVoiceBtnText').textContent = '● Recording — tap to stop';
+  };
+  healthVoiceRec.onresult = (e) => {
+    let t = '';
+    for (let i=0; i<e.results.length; i++) t += e.results[i][0].transcript;
+    document.getElementById('healthTextInput').value = t;
+  };
+  healthVoiceRec.onend = () => {
+    healthVoiceRec = null;
+    document.getElementById('healthVoiceBtn').classList.remove('recording');
+    document.getElementById('healthVoiceBtnText').textContent = '🎙 Speak your workout details';
+  };
+  healthVoiceRec.start();
+}
+
+async function analyzeWorkout() {
+  const text     = document.getElementById('healthTextInput').value.trim();
+  const date     = document.getElementById('healthDate').value || new Date().toISOString().slice(0,10);
+  const type     = document.getElementById('healthType').value;
+  const fitnessGoals = localStorage.getItem('fitnessGoals') || 'General fitness, health, and mental sharpness.';
+
+  if (!text && !healthImageBase64) { showToast('Add workout details — text, voice, or photo.'); return; }
+
+  const btn = document.getElementById('analyzeWorkoutBtn');
+  btn.disabled = true;
+  document.getElementById('healthLoadingIndicator').style.display = 'block';
+  document.getElementById('healthAnalysisPanel').style.display = 'none';
+
+  const systemPrompt = `You are an expert fitness coach and health analyst. Analyze the workout details provided and return ONLY valid JSON:
+{
+  "title": "Short workout title e.g. Morning 5K Run",
+  "type": "${type}",
+  "date": "${date}",
+  "duration": 45,
+  "metrics": {
+    "distance": "5km",
+    "pace": "5:30/km",
+    "sets": "",
+    "reps": "",
+    "weight": "",
+    "calories": "",
+    "heartRate": ""
+  },
+  "summary": "2-3 sentence summary of what was done",
+  "highlights": ["positive thing 1", "positive thing 2"],
+  "areasToWatch": ["any concern or note"],
+  "recommendations": [
+    {"title": "recommendation title", "detail": "specific actionable advice based on their fitness goals"},
+    {"title": "next session suggestion", "detail": "what to do next time"}
+  ],
+  "recoveryScore": 8,
+  "effortScore": 7
+}
+
+User fitness goals: ${fitnessGoals}
+Rules: metrics should only include what's mentioned — leave others blank. recommendations must be specific to stated goals. recoveryScore and effortScore out of 10.`;
+
+  try {
+    if (!apiKey) throw new Error('no key');
+
+    const userContent = [];
+    if (healthImageBase64) {
+      userContent.push({ type: 'image', source: { type: 'base64', media_type: healthImageType, data: healthImageBase64 } });
+    }
+    userContent.push({ type: 'text', text: text || 'Analyze the workout shown in the image.' });
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: activeModel, max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: userContent }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const analysis = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    pendingWorkout = analysis;
+    showHealthAnalysis(analysis);
+  } catch(e) {
+    showToast(apiKey ? 'Error: ' + e.message : 'Add your Claude API key in Settings.');
+  }
+
+  btn.disabled = false;
+  document.getElementById('healthLoadingIndicator').style.display = 'none';
+}
+
+function showHealthAnalysis(a) {
+  const panel = document.getElementById('healthAnalysisPanel');
+  const content = document.getElementById('healthAnalysisContent');
+
+  const metrics = Object.entries(a.metrics||{}).filter(([,v])=>v).map(([k,v])=>`
+    <div class="health-stat-box">
+      <div class="health-stat-box-val">${v}</div>
+      <div class="health-stat-box-label">${k}</div>
+    </div>`).join('');
+
+  const highlights = (a.highlights||[]).map(h=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:var(--green)">✓</span><span style="font-size:13px;color:var(--text)">${h}</span></div>`).join('');
+  const warnings   = (a.areasToWatch||[]).map(w=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:var(--amber)">⚠</span><span style="font-size:13px;color:var(--text-muted)">${w}</span></div>`).join('');
+  const recs = (a.recommendations||[]).map(r=>`
+    <div style="padding:10px 12px;background:var(--surface2);border:1px solid rgba(16,185,129,0.2);border-radius:6px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:3px">↗ ${r.title}</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.5">${r.detail}</div>
+    </div>`).join('');
+
+  content.innerHTML = `
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--text);margin-bottom:4px">${a.title||'Workout'}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${a.date} · ${a.duration||'?'}min</div>
+    ${metrics ? `<div class="health-stat-row">${metrics}</div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="health-stat-box"><div class="health-stat-box-val" style="color:var(--amber)">${a.effortScore||'—'}/10</div><div class="health-stat-box-label">Effort</div></div>
+      <div class="health-stat-box"><div class="health-stat-box-val" style="color:var(--teal)">${a.recoveryScore||'—'}/10</div><div class="health-stat-box-label">Recovery Need</div></div>
+    </div>
+    ${a.summary ? `<div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;font-style:italic">"${a.summary}"</div>` : ''}
+    ${highlights ? `<div class="health-analysis-label">Highlights</div><div style="margin-bottom:12px">${highlights}</div>` : ''}
+    ${warnings   ? `<div class="health-analysis-label">Watch</div><div style="margin-bottom:12px">${warnings}</div>` : ''}
+    ${recs ? `<div class="health-analysis-label">Recommendations Based on Your Goals</div>${recs}` : ''}`;
+
+  panel.style.display = 'block';
+}
+
+function discardHealthAnalysis() {
+  document.getElementById('healthAnalysisPanel').style.display = 'none';
+  pendingWorkout = null;
+  healthImageBase64 = null;
+  healthImageType = null;
+  document.getElementById('healthImagePreview').style.display = 'none';
+  document.getElementById('healthTextInput').value = '';
+}
+
+function saveWorkout() {
+  if (!pendingWorkout) return;
+  const workout = { ...pendingWorkout, id: Date.now(), loggedAt: new Date().toISOString() };
+  workoutLog.unshift(workout);
+  localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
+  if (gasConfigured) gasSaveWorkout(workout);
+  document.getElementById('health-count-badge').textContent = workoutLog.length + ' session' + (workoutLog.length!==1?'s':'');
+  discardHealthAnalysis();
+  renderWorkoutLog();
+  showToast('✓ Workout saved to log!');
+}
+
+function setHealthFilter(f, btn) {
+  healthFilter = f;
+  document.querySelectorAll('#view-health .filter-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderWorkoutLog();
+}
+
+function loadWorkoutLog() {
+  try {
+    const saved = localStorage.getItem('workoutLog');
+    if (saved) workoutLog = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function renderWorkoutLog() {
+  const container = document.getElementById('health-log-list');
+  const badge = document.getElementById('health-count-badge');
+  if (!container) return;
+  badge.textContent = workoutLog.length + ' session' + (workoutLog.length!==1?'s':'');
+  const filtered = healthFilter==='all' ? workoutLog : workoutLog.filter(w=>w.type===healthFilter);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      <p>No workouts logged yet.</p>
+    </div>`;
+    return;
+  }
+
+  const typeEmoji = {run:'🏃',strength:'🏋️',bike:'🚴',yoga:'🧘',hiit:'⚡',walk:'🚶',other:'💪'};
+  container.innerHTML = filtered.map(w => {
+    const metrics = Object.entries(w.metrics||{}).filter(([,v])=>v).map(([k,v])=>`<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">${k}: <strong style="color:var(--text)">${v}</strong></span>`).join(' · ');
+    const recs = (w.recommendations||[]).slice(0,1).map(r=>`
+      <div class="workout-rec"><div class="workout-rec-label">↗ Recommendation</div>${r.title}: ${r.detail}</div>`).join('');
+    return `<div class="workout-card ${w.type||'other'}">
+      <div class="workout-header">
+        <div>
+          <div class="workout-title">${typeEmoji[w.type]||'💪'} ${w.title||'Workout'}</div>
+          <div class="workout-date">${w.date} · ${w.duration||'?'}min</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber);line-height:1">${w.effortScore||'—'}</div>
+            <div style="font-size:9px;color:var(--text-muted)">EFFORT</div>
+          </div>
+          <button onclick="deleteWorkout(${w.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px">✕</button>
+        </div>
+      </div>
+      ${metrics ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">${metrics}</div>` : ''}
+      ${w.summary ? `<div class="workout-notes">${w.summary}</div>` : ''}
+      ${recs}
+    </div>`;
+  }).join('');
+}
+
+function deleteWorkout(id) {
+  if (gasConfigured) gasDeleteWorkout(id);
+  workoutLog = workoutLog.filter(w=>w.id!==id);
+  localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
+  renderWorkoutLog();
+  showToast('Workout removed.');
 }
 
 // ── GOALS ─────────────────────────────────────────────────────
@@ -2979,19 +3614,14 @@ function saveApiKey() {
   showToast(apiKey ? '✓ API key saved permanently on this device.' : 'API key cleared.');
 }
 
-function loadSavedSettings() {
-  const savedKey = localStorage.getItem('claudeApiKey');
-  const savedModel = localStorage.getItem('claudeModel');
-  if (savedKey) {
-    apiKey = savedKey;
-    const el = document.getElementById('apiKeyInput');
-    if (el) el.value = savedKey;
-  }
-  if (savedModel) {
-    activeModel = savedModel;
-    const el = document.getElementById('modelSelect');
-    if (el) el.value = savedModel;
-  }
+function applyFontSize(size) {
+  size = parseInt(size);
+  document.body.style.fontSize = size + 'px';
+  localStorage.setItem('fontSize', size);
+  const label = document.getElementById('fontSizeLabel');
+  const slider = document.getElementById('fontSizeSlider');
+  if (label) label.textContent = size + 'px';
+  if (slider) slider.value = size;
 }
 
 function clearAllTasks() {
