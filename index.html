@@ -1384,6 +1384,13 @@
           <button class="action-btn action-btn-danger" onclick="clearAllTasks()" style="flex:1;padding:10px">Clear All</button>
         </div>
       </div>
+      <div class="settings-row" style="margin-top:8px">
+        <label>Google Sheets Sync</label>
+        <button class="primary-btn" onclick="syncAllToSheets()" id="syncAllBtn" style="background:var(--teal);color:#fff">
+          ↑ Force Sync All Data to Google Sheets
+        </button>
+        <div id="syncAllStatus" style="font-size:12px;margin-top:6px;display:none"></div>
+      </div>
     </div>
 
     <div class="settings-section">
@@ -2978,6 +2985,47 @@ function loadTodayRec() {
   } catch(e) {}
 }
 
+async function syncAllToSheets() {
+  const btn = document.getElementById('syncAllBtn');
+  const status = document.getElementById('syncAllStatus');
+  if (!gasConfigured) {
+    status.style.display = 'block';
+    status.style.color = 'var(--red)';
+    status.textContent = '✕ Not connected — paste your Google Sheets URL and connect first.';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  status.style.display = 'block';
+  status.style.color = 'var(--amber)';
+  status.textContent = 'Syncing all data...';
+
+  try {
+    let count = 0;
+    // Sync tasks
+    for (const t of tasks) { await gasSaveTask(t); count++; }
+    // Sync backlog
+    for (const b of backlog) { await gasSaveBacklog(b); count++; }
+    // Sync goals
+    for (const g of goals) { await gasSaveGoal(g); count++; }
+    // Sync workouts
+    for (const w of workoutLog) { await gasSaveWorkout(w); count++; }
+    // Sync fitness goals setting
+    const fg = localStorage.getItem('fitnessGoals');
+    if (fg) await gasSaveSetting('fitnessGoals', fg);
+
+    status.style.color = 'var(--green)';
+    status.textContent = `✓ Synced ${count} records to Google Sheets.`;
+    showToast(`✓ All data synced — ${count} records.`);
+  } catch(e) {
+    status.style.color = 'var(--red)';
+    status.textContent = '✕ Sync failed: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '↑ Force Sync All Data to Google Sheets';
+}
+
 function saveFitnessGoals() {
   const val = document.getElementById('fitnessGoalsInput').value.trim();
   localStorage.setItem('fitnessGoals', val);
@@ -3151,11 +3199,17 @@ function saveWorkout() {
   const workout = { ...pendingWorkout, id: Date.now(), loggedAt: new Date().toISOString() };
   workoutLog.unshift(workout);
   localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
-  if (gasConfigured) gasSaveWorkout(workout);
+  // Save to Sheets — retry after 2s if GAS not ready yet
+  if (gasConfigured) {
+    gasSaveWorkout(workout).then(() => showToast('✓ Workout saved to log & Google Sheets!'));
+  } else {
+    showToast('✓ Workout saved locally. Connect to Sheets in Settings to sync.');
+    // Auto-retry once after delay in case GAS is still connecting
+    setTimeout(() => { if (gasConfigured) gasSaveWorkout(workout); }, 3000);
+  }
   document.getElementById('health-count-badge').textContent = workoutLog.length + ' session' + (workoutLog.length!==1?'s':'');
   discardHealthAnalysis();
   renderWorkoutLog();
-  showToast('✓ Workout saved to log!');
 }
 
 function setHealthFilter(f, btn) {
