@@ -1679,18 +1679,23 @@ async function testGAS() {
 async function connectGAS(url) {
   if (!url) return false;
   try {
-    const res = await fetch(`${url}?action=getTasks`);
-    const data = await res.json();
-    if (!Array.isArray(data) && data.error) throw new Error(data.error);
+    const testUrl = `${url}?action=ping&t=${Date.now()}`;
+    console.log('[GAS] Connecting to:', testUrl);
+    const res = await fetch(testUrl, { redirect: 'follow' });
+    console.log('[GAS] Status:', res.status, '| Final URL:', res.url);
+    const text = await res.text();
+    console.log('[GAS] Response:', text);
+    const data = JSON.parse(text);
+    if (data.error) throw new Error(data.error);
     gasUrl = url;
     gasConfigured = true;
     localStorage.setItem('gasUrl', url);
-    // Pull data and start polling every 30s
     await gasPullAll();
     if (syncInterval) clearInterval(syncInterval);
     syncInterval = setInterval(gasPullAll, 30000);
     return true;
   } catch(e) {
+    console.error('[GAS] Connection failed:', e);
     throw new Error('Could not connect: ' + e.message);
   }
 }
