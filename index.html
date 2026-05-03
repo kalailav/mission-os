@@ -2508,43 +2508,159 @@ Calendar context: ${calendarContext || 'Standard 9-5 workday.'}`;
 }
 
 function showInlineAnalysis(a) {
-  document.getElementById('inlineTitle').textContent = a.title;
-  document.getElementById('inlineScores').innerHTML = `
+  // Editable title
+  document.getElementById('inlineTitle').innerHTML = `
+    <input type="text" id="editTitle" value="${(a.title||'').replace(/"/g,'&quot;')}"
+      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+      color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+      padding:8px 10px;outline:none;transition:border-color 0.2s"
+      onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">`;
+
+  // Editable scores
+  const scoreInput = (val, id, color, label) => `
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red)">${a.urgencyScore}</div>
-      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Urgency</div>
-    </div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--indigo)">${a.importanceScore}</div>
-      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Importance</div>
-    </div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber)">${a.priorityScore}</div>
+      <input type="number" id="${id}" value="${val}" min="1" max="10"
+        style="width:100%;background:transparent;border:none;font-family:'Bebas Neue',sans-serif;
+        font-size:22px;color:${color};text-align:center;outline:none;-moz-appearance:textfield"
+        oninput="updatePriorityScore()">
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">${label}</div>
+    </div>`;
+  document.getElementById('inlineScores').innerHTML =
+    scoreInput(a.urgencyScore,   'editUrgency',    'var(--red)',    'Urgency') +
+    scoreInput(a.importanceScore,'editImportance', 'var(--indigo)', 'Importance') +
+    `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
+      <div id="editPriorityDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber)">${a.priorityScore}</div>
       <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
     </div>`;
-  document.getElementById('inlineChunks').innerHTML = (a.chunks||[]).map((c,i) => `
-    <div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amber);min-width:18px">${i+1}</span>
-      <div>
-        <div style="font-size:12px;font-weight:500;color:var(--text)">${c.title}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">⏱ ${c.duration}m — ${c.description}</div>
+
+  // Editable chunks
+  const chunksHtml = (a.chunks||[]).map((c,i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;position:relative" id="chunk_${i}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amber);min-width:18px">${i+1}</span>
+        <input type="text" id="chunkTitle_${i}" value="${(c.title||'').replace(/"/g,'&quot;')}"
+          placeholder="Chunk title"
+          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+          color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+          padding:2px 4px;outline:none">
+        <button onclick="removeChunk(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px" title="Remove chunk">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;color:var(--text-muted)">⏱</span>
+        <input type="number" id="chunkDur_${i}" value="${c.duration||30}" min="5" max="480"
+          style="width:60px;background:var(--surface);border:1px solid var(--border);border-radius:4px;
+          color:var(--text);font-family:'JetBrains Mono',sans-serif;font-size:11px;padding:3px 6px;outline:none;text-align:center">
+        <span style="font-size:10px;color:var(--text-muted)">min</span>
+        <input type="text" id="chunkDesc_${i}" value="${(c.description||'').replace(/"/g,'&quot;')}"
+          placeholder="Description"
+          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+          color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;
+          padding:2px 4px;outline:none">
       </div>
     </div>`).join('');
+
+  document.getElementById('inlineChunks').innerHTML = chunksHtml + `
+    <button onclick="addChunk()" style="width:100%;padding:7px;background:transparent;border:1px dashed var(--border);
+      border-radius:6px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;
+      transition:all 0.15s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+      + Add Chunk
+    </button>`;
+
   document.getElementById('inlineNote').textContent = a.note || '';
   document.getElementById('inlineAnalysis').classList.add('visible');
 }
 
+function updatePriorityScore() {
+  const u = parseInt(document.getElementById('editUrgency')?.value||0);
+  const i = parseInt(document.getElementById('editImportance')?.value||0);
+  const p = Math.round((u * 0.5 + i * 0.5));
+  const el = document.getElementById('editPriorityDisplay');
+  if (el) el.textContent = p;
+}
+
+let _chunkCount = 0;
+function addChunk() {
+  _chunkCount++;
+  const i = document.querySelectorAll('[id^="chunk_"]').length;
+  const div = document.createElement('div');
+  div.id = `chunk_${i}`;
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;position:relative';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amber);min-width:18px">${i+1}</span>
+      <input type="text" id="chunkTitle_${i}" value="" placeholder="Chunk title"
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+        color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:2px 4px;outline:none">
+      <button onclick="this.closest('[id^=chunk_]').remove();renumberChunks()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:10px;color:var(--text-muted)">⏱</span>
+      <input type="number" id="chunkDur_${i}" value="30" min="5" max="480"
+        style="width:60px;background:var(--surface);border:1px solid var(--border);border-radius:4px;
+        color:var(--text);font-family:'JetBrains Mono',sans-serif;font-size:11px;padding:3px 6px;outline:none;text-align:center">
+      <span style="font-size:10px;color:var(--text-muted)">min</span>
+      <input type="text" id="chunkDesc_${i}" value="" placeholder="Description"
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+        color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;padding:2px 4px;outline:none">
+    </div>`;
+  const addBtn = document.querySelector('#inlineChunks button');
+  document.getElementById('inlineChunks').insertBefore(div, addBtn);
+  document.getElementById(`chunkTitle_${i}`).focus();
+}
+
+function removeChunk(i) {
+  const el = document.getElementById(`chunk_${i}`);
+  if (el) el.remove();
+  renumberChunks();
+}
+
+function renumberChunks() {
+  const chunks = document.querySelectorAll('[id^="chunk_"]');
+  chunks.forEach((c,i) => {
+    c.id = `chunk_${i}`;
+    const num = c.querySelector('span');
+    if (num) num.textContent = i+1;
+    const title = c.querySelector('input[type="text"]');
+    if (title) title.id = `chunkTitle_${i}`;
+    const dur = c.querySelector('input[type="number"]');
+    if (dur) dur.id = `chunkDur_${i}`;
+    const desc = c.querySelectorAll('input[type="text"]')[1];
+    if (desc) desc.id = `chunkDesc_${i}`;
+  });
+}
+
+function readEditedTask() {
+  // Read title
+  const title = document.getElementById('editTitle')?.value.trim() || pendingQuickTask?.title || '';
+  // Read scores
+  const urgencyScore    = parseInt(document.getElementById('editUrgency')?.value)||6;
+  const importanceScore = parseInt(document.getElementById('editImportance')?.value)||6;
+  const priorityScore   = Math.round(urgencyScore*0.5 + importanceScore*0.5);
+  // Read chunks
+  const chunks = [];
+  const chunkEls = document.querySelectorAll('#inlineChunks [id^="chunk_"]');
+  chunkEls.forEach((_, i) => {
+    const t = document.getElementById(`chunkTitle_${i}`)?.value.trim();
+    const d = parseInt(document.getElementById(`chunkDur_${i}`)?.value)||30;
+    const desc = document.getElementById(`chunkDesc_${i}`)?.value.trim()||'';
+    if (t) chunks.push({ title: t, duration: d, description: desc });
+  });
+  return { title, urgencyScore, importanceScore, priorityScore, chunks };
+}
+
 function confirmQuickAdd() {
   if (!pendingQuickTask) return;
+  const edited = readEditedTask();
   const task = {
     id: Date.now(),
-    title: pendingQuickTask.title,
+    title: edited.title || pendingQuickTask.title,
     rawInput: pendingQuickTask.rawInput,
     category: pendingQuickTask.category || currentCategory || 'work',
-    urgencyScore: pendingQuickTask.urgencyScore||6,
-    importanceScore: pendingQuickTask.importanceScore||6,
-    priorityScore: pendingQuickTask.priorityScore||6,
-    chunks: pendingQuickTask.chunks||[],
+    urgencyScore: edited.urgencyScore,
+    importanceScore: edited.importanceScore,
+    priorityScore: edited.priorityScore,
+    chunks: edited.chunks.length ? edited.chunks : (pendingQuickTask.chunks||[]),
     suggestedTimeBlock: pendingQuickTask.suggestedTimeBlock||'',
     note: pendingQuickTask.note||'',
     startTime:'', endTime:'', done:false, chunksCompleted:0
