@@ -891,7 +891,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.3</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.4</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2182,12 +2182,13 @@ function importCalendarAsWorkTasks() {
   });
   if (!gasConfigured) { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
 
-  const label = new Date(selectedDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const label = pickerVal
+    ? new Date(pickerVal + 'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+    : 'today';
   showToast(`✓ ${added} events synced to ${label}`);
-  renderCalendar2();
 
-  // Navigate calendar to the selected date
-  calDate = new Date(selectedDate);
+  // Navigate calendar to selected date using picker ISO value directly
+  if (pickerVal) calDate = new Date(pickerVal + 'T00:00:00');
   switchView('calendar');
 }
 
@@ -4277,14 +4278,17 @@ function renderCalendar2() {
 
   // Task blocks — render each chunk as a sequential block
   const dateStr = calDate.toDateString();
+  const allDayEvents = [];
   tasks.forEach(task => {
     if (task.done) return;
     if (task.taskDate && task.taskDate !== dateStr) return;
     if (!task.taskDate && dateStr !== new Date().toDateString()) return;
 
     let sh=null, sm=0;
-    if (task.startTime) { [sh,sm] = task.startTime.split(':').map(Number); }
-    else {
+    if (task.startTime) {
+      const parts = task.startTime.split(':').map(Number);
+      sh = parts[0]; sm = parts[1] || 0;
+    } else {
       const m = (task.suggestedTimeBlock||'').match(/(\d+):(\d+)\s*(AM|PM)/i);
       if (m) {
         sh=parseInt(m[1]); sm=parseInt(m[2]);
@@ -4292,7 +4296,12 @@ function renderCalendar2() {
         if (m[3].toUpperCase()==='AM'&&sh===12) sh=0;
       }
     }
-    if (sh===null) return;
+
+    // No time — collect as all-day event, render at top
+    if (sh===null) {
+      allDayEvents.push(task);
+      return;
+    }
 
     if (task.chunks && task.chunks.length > 0) {
       // Render each chunk as its own block sequentially
@@ -4334,7 +4343,23 @@ function renderCalendar2() {
     }
   });
 
-  // Mouse/touch events for click-to-add
+  // Render all-day events as a strip at the very top of the grid
+  if (allDayEvents.length > 0) {
+    const strip = document.createElement('div');
+    strip.style.cssText = `position:absolute;left:0;right:0;top:0;z-index:5;display:flex;flex-direction:column;gap:2px;padding:2px 4px`;
+    allDayEvents.forEach(task => {
+      const pill = document.createElement('div');
+      pill.style.cssText = `background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.4);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:#a5b4fc;cursor:pointer;display:flex;align-items:center;gap:4px`;
+      pill.innerHTML = `<span>📅</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${task.title}</span><span style="opacity:0.6;font-size:9px">All day</span>`;
+      pill.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
+      strip.appendChild(pill);
+    });
+    slots.insertBefore(strip, hoverLine);
+    // Push hour lines down to make room
+    slots.style.paddingTop = (allDayEvents.length * 24 + 6) + 'px';
+  } else {
+    slots.style.paddingTop = '0';
+  }
   slots.onmousemove = (e) => {
     const rect = slots.getBoundingClientRect();
     const y = e.clientY - rect.top;
