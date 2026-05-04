@@ -891,7 +891,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.2</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.3</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -948,6 +948,10 @@
       <div id="calFreeSlots"></div>
       <div id="calImportBtn" style="display:none;margin-top:10px">
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Sync to App</div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Select date to sync events to:</div>
+          <input type="date" id="calSyncDate" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;color-scheme:dark;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <button onclick="importCalendarAsWorkTasks()" style="padding:10px 8px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius-sm);color:var(--indigo);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='rgba(99,102,241,0.25)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -2127,23 +2131,32 @@ function syncCalendarToView() {
     showToast('No calendar events to sync — upload a screenshot first.');
     return;
   }
-  // Switch to Calendar tab and render
+  // Navigate calendar to the selected date
+  const pickerVal = document.getElementById('calSyncDate')?.value;
+  if (pickerVal) calDate = new Date(pickerVal + 'T00:00:00');
   switchView('calendar');
   renderCalendar2();
-  showToast(`✓ ${parsedCalendarEvents.length} events synced to Calendar view`);
+  showToast(`✓ ${parsedCalendarEvents.length} events shown on calendar`);
 }
 
 function importCalendarAsWorkTasks() {
   if (!parsedCalendarEvents.length) { showToast('Upload a calendar screenshot first.'); return; }
+
+  // Get user-selected date from picker — fall back to today
+  const pickerVal = document.getElementById('calSyncDate')?.value;
+  const selectedDate = pickerVal
+    ? new Date(pickerVal + 'T00:00:00').toDateString()
+    : new Date().toDateString();
+
   let added = 0;
   parsedCalendarEvents.forEach(evt => {
-    // Use event's own date if Claude extracted it, fall back to today
+    // Use event's own parsed date if available, otherwise use selected date
     let taskDate;
     if (evt.date) {
       const d = new Date(evt.date + 'T00:00:00');
-      taskDate = isNaN(d) ? new Date().toDateString() : d.toDateString();
+      taskDate = isNaN(d) ? selectedDate : d.toDateString();
     } else {
-      taskDate = new Date().toDateString();
+      taskDate = selectedDate;
     }
     // Don't duplicate
     const exists = tasks.find(t => t.title === evt.title && t.taskDate === taskDate);
@@ -2159,7 +2172,7 @@ function importCalendarAsWorkTasks() {
       endTime: evt.endTime || '',
       taskDate,
       suggestedTimeBlock: evt.time || '',
-      note: `Imported from Outlook — ${evt.date || taskDate}`,
+      note: `Imported from Outlook — ${taskDate}`,
       userNotes: '', done: false, chunksCompleted: 0,
       isCalendarBlock: true
     };
@@ -2168,8 +2181,14 @@ function importCalendarAsWorkTasks() {
     added++;
   });
   if (!gasConfigured) { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
-  showToast(`✓ Imported ${added} events to their correct dates`);
+
+  const label = new Date(selectedDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  showToast(`✓ ${added} events synced to ${label}`);
   renderCalendar2();
+
+  // Navigate calendar to the selected date
+  calDate = new Date(selectedDate);
+  switchView('calendar');
 }
 
 // ── FILTER ───────────────────────────────────────────────────
@@ -2292,14 +2311,18 @@ function handleCalUpload(event) {
       // Always show import buttons after successful parse
       const importBtn = document.getElementById('calImportBtn');
       const importCount = document.getElementById('calImportCount');
+      const syncDate = document.getElementById('calSyncDate');
       if (importBtn) importBtn.style.display = 'block';
-      if (importCount) importCount.textContent = `${parsedCalendarEvents.length} event${parsedCalendarEvents.length!==1?'s':''} found — ready to sync`;
+      if (syncDate && !syncDate.value) syncDate.value = new Date().toISOString().slice(0,10);
+      if (importCount) importCount.textContent = `${parsedCalendarEvents.length} event${parsedCalendarEvents.length!==1?'s':''} found — select date and sync`;
     } catch(err) {
       preview.textContent = '✓ Screenshot saved. Will use as context for task scheduling.';
       calendarContext = 'User uploaded a calendar screenshot but parsing failed.';
       // Still show buttons even on parse failure
       const importBtn = document.getElementById('calImportBtn');
+      const syncDate = document.getElementById('calSyncDate');
       if (importBtn) importBtn.style.display = 'block';
+      if (syncDate && !syncDate.value) syncDate.value = new Date().toISOString().slice(0,10);
     }
   };
   reader.readAsDataURL(file);
