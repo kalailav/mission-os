@@ -979,7 +979,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.04.3</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.04.5</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -1047,7 +1047,7 @@
           </button>
           <button onclick="syncCalendarToView()" style="padding:10px 8px;background:rgba(13,148,136,0.12);border:1px solid rgba(13,148,136,0.3);border-radius:var(--radius-sm);color:var(--teal);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='rgba(13,148,136,0.25)'" onmouseout="this.style.background='rgba(13,148,136,0.12)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            → Sync Calendar
+            → View on Calendar
           </button>
         </div>
         <div id="calImportCount" style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center"></div>
@@ -2654,85 +2654,273 @@ function renderTasks() {
 function openTask(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
-  const totalTime = task.chunks.reduce((s,c)=>s+c.duration,0);
-  const sc = task.priorityScore>=8?'score-high':task.priorityScore>=5?'score-med':'score-low';
-  const catBadge = task.category==='work'?'indigo':task.category==='personal'?'teal':task.category==='health'?'green':'amber';
 
-  let html = `
+  const cats = ['work','personal','health','interview'];
+  const catLabels = {'work':'💼 Work','personal':'🏠 Personal','health':'💪 Health','interview':'🎯 Career'};
+
+  const html = `
     <div class="modal-handle"></div>
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px">
-      <div style="flex:1">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1.2;margin-bottom:6px">${task.title}</div>
-        <span class="badge badge-${catBadge}">${task.category}</span>
-      </div>
-      <div style="text-align:right">
-        <div class="priority-score ${sc}" style="font-size:34px">${task.priorityScore}</div>
-        <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
-      </div>
-    </div>
-    <div class="time-row">
-      <div>
-        <div class="time-label">Start Time</div>
-        <input type="time" id="startTimeInput" value="${task.startTime||'09:00'}" onchange="updateTaskTime(${id})">
-      </div>
-      <div>
-        <div class="time-label">End Time</div>
-        <input type="time" id="endTimeInput" value="${task.endTime||calcEndTime(task)}" onchange="updateTaskTime(${id})">
-      </div>
-    </div>
-    <div class="scores-row">
-      <div class="score-box"><div class="score-box-val" style="color:var(--red)">${task.urgencyScore}</div><div class="score-box-label">Urgency</div></div>
-      <div class="score-box"><div class="score-box-val" style="color:var(--indigo)">${task.importanceScore}</div><div class="score-box-label">Importance</div></div>
-      <div class="score-box"><div class="score-box-val" style="color:var(--teal)">${task.chunks.length}</div><div class="score-box-label">Chunks</div></div>
-    </div>
-    ${task.note?`<div style="font-size:12px;color:var(--text-muted);padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:14px;line-height:1.6;font-style:italic">"${task.note}"</div>`:''}
-    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Work Chunks</div>
-    <div class="chunks-list">`;((chunk, i) => {
-    const isDone = i < task.chunksCompleted;
-    const isActive = i === task.chunksCompleted && !task.done;
-    html += `
-      <div class="chunk-item" style="${isDone?'opacity:0.45':''}">
-        <div class="chunk-num" style="color:${isDone?'var(--green)':isActive?'var(--amber)':'var(--text-dim)'}">${isDone?'✓':i+1}</div>
-        <div class="chunk-detail" style="flex:1">
-          <div class="chunk-title" style="${isDone?'text-decoration:line-through':''}">${chunk.title}</div>
-          <div class="chunk-dur">⏱ ${chunk.duration} min — ${chunk.description}</div>
-        </div>
-        ${isActive?`<button class="action-btn action-btn-primary" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="completeChunk(${id})">Done</button>`:''}
-      </div>`;
-  });
 
-  html += `</div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Notes</div>
-      <textarea id="taskNotesInput" rows="3" placeholder="Add notes, links, context..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;resize:vertical;outline:none;line-height:1.5;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">${task.userNotes||''}</textarea>
-      <button onclick="saveTaskNotes(${id})" style="margin-top:6px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">Save Notes</button>
+    <!-- Title -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Task Title</div>
+      <input type="text" id="editTaskTitle" value="${(task.title||'').replace(/"/g,'&quot;')}"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;padding:12px 14px;outline:none;transition:border-color 0.2s"
+        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
     </div>
-    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+
+    <!-- Category -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Category</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${cats.map(c => `<button class="tag-btn ${task.category===c?'selected':''}" data-cat="${c}"
+          onclick="document.querySelectorAll('#modalContent .tag-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')"
+          style="font-size:13px;padding:7px 14px">${catLabels[c]}</button>`).join('')}
+      </div>
+    </div>
+
+    <!-- Date & Time -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Date</div>
+        <input type="date" id="editTaskDate"
+          value="${task.taskDate ? new Date(task.taskDate).toLocaleDateString('en-CA') : new Date().toLocaleDateString('en-CA')}"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px;outline:none;color-scheme:dark">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Start</div>
+        <input type="time" id="editStartTime" value="${task.startTime||'09:00'}"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px;outline:none;color-scheme:dark">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">End</div>
+        <input type="time" id="editEndTime" value="${task.endTime||calcEndTime(task)}"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px;outline:none;color-scheme:dark">
+      </div>
+    </div>
+
+    <!-- Priority Sliders -->
+    <div style="margin-bottom:16px;padding:14px;background:var(--surface2);border-radius:var(--radius-sm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority Scores</div>
+        <button onclick="claudeRePrioritize(${id})" style="padding:5px 12px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:16px;color:var(--amber);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer">
+          ✦ Claude Re-score
+        </button>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:13px;color:var(--text)">Urgency</span>
+          <span id="urgValDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--red)">${task.urgencyScore||5}</span>
+        </div>
+        <input type="range" id="editUrgency" min="1" max="10" value="${task.urgencyScore||5}"
+          style="width:100%;accent-color:var(--red);cursor:pointer"
+          oninput="document.getElementById('urgValDisplay').textContent=this.value;recalcPriority()">
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:13px;color:var(--text)">Importance</span>
+          <span id="impValDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--indigo)">${task.importanceScore||5}</span>
+        </div>
+        <input type="range" id="editImportance" min="1" max="10" value="${task.importanceScore||5}"
+          style="width:100%;accent-color:var(--indigo);cursor:pointer"
+          oninput="document.getElementById('impValDisplay').textContent=this.value;recalcPriority()">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text)">Priority Score</span>
+        <span id="priValDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--amber)">${task.priorityScore||5}</span>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Notes</div>
+      <textarea id="editTaskNotes" rows="3" placeholder="Add notes, links, context..."
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;resize:vertical;outline:none;line-height:1.5;transition:border-color 0.2s"
+        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">${task.userNotes||''}</textarea>
+    </div>
+
+    <!-- Conflict Check Panel -->
+    <div id="conflictPanel" style="display:none;margin-bottom:14px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm)">
+      <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">⚠ Conflict / Claude's Assessment</div>
+      <div id="conflictContent" style="font-size:13px;color:var(--text-muted);line-height:1.6"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="saveTaskEdits(${id})" style="flex:2;padding:13px;background:var(--amber);color:#000;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer">
+        ✓ Save Changes
+      </button>
+      <button onclick="saveTaskEdits(${id},true)" style="flex:1;padding:13px;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">
+        Check Conflicts
+      </button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${!task.done ? `
-        <button onclick="markNextChunk(${id});closeModal()" style="flex:2;padding:11px;background:var(--green);color:#000;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">
+        <button onclick="markNextChunk(${id});closeModal()" style="flex:1;padding:11px;background:var(--green);color:#000;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer">
           ✓ ${task.chunksCompleted < task.chunks.length && task.chunks.length > 0 ? 'Complete Chunk '+(task.chunksCompleted+1) : 'Mark Complete'}
         </button>
-        <button onclick="toggleDone(${id});closeModal()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">✓✓ All Done</button>
+        <button onclick="toggleDone(${id});closeModal()" style="padding:11px 14px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">✓✓ Done</button>
       ` : `
-        <button onclick="toggleDone(${id});closeModal()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">↩ Reopen Task</button>
+        <button onclick="toggleDone(${id});closeModal()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">↩ Reopen</button>
       `}
-      ${task.category==='work'?`<button class="export-btn" onclick="exportSingleTask(${id})" style="min-width:110px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Outlook ICS
-      </button>`:''}
-      <button class="action-btn action-btn-danger" onclick="deleteTask(${id})" style="padding:10px 14px">Delete</button>
+      ${task.category==='work'?`<button class="export-btn" onclick="exportSingleTask(${id})">Outlook ICS</button>`:''}
+      <button onclick="deleteTask(${id})" style="padding:11px 14px;background:transparent;border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">Delete</button>
     </div>`;
 
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('taskModal').classList.add('open');
 }
 
+function recalcPriority() {
+  const u = parseInt(document.getElementById('editUrgency')?.value||5);
+  const i = parseInt(document.getElementById('editImportance')?.value||5);
+  const p = Math.round(u*0.5 + i*0.5);
+  const el = document.getElementById('priValDisplay');
+  if (el) el.textContent = p;
+}
+
+async function claudeRePrioritize(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task || !apiKey) { showToast('Add Claude API key in Settings.'); return; }
+  showToast('✦ Claude re-scoring...');
+  try {
+    const fitnessGoals = localStorage.getItem('fitnessGoals')||'';
+    const activeGoals = goals.slice(0,3).map(g=>`"${g.goal}" ${g.progressPercent||0}%`).join('; ');
+    const sys = `You are a productivity coach. Score this task and return ONLY JSON:
+{"urgencyScore":7,"importanceScore":8,"priorityScore":8,"reasoning":"one sentence"}
+Consider: today is ${new Date().toLocaleDateString()}, active goals: ${activeGoals||'none'}, fitness goals: ${fitnessGoals||'none'}.`;
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:activeModel,max_tokens:200,system:sys,messages:[{role:'user',content:`Task: ${task.title}\nCategory: ${task.category}`}]})
+    });
+    const data = await res.json();
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
+    const a = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    const urgEl = document.getElementById('editUrgency');
+    const impEl = document.getElementById('editImportance');
+    if (urgEl) { urgEl.value = a.urgencyScore; document.getElementById('urgValDisplay').textContent = a.urgencyScore; }
+    if (impEl) { impEl.value = a.importanceScore; document.getElementById('impValDisplay').textContent = a.importanceScore; }
+    recalcPriority();
+    const conflictPanel = document.getElementById('conflictPanel');
+    const conflictContent = document.getElementById('conflictContent');
+    if (conflictPanel && conflictContent) {
+      conflictContent.innerHTML = `<strong style="color:var(--amber)">✦ Claude's reasoning:</strong> ${a.reasoning||''}`;
+      conflictPanel.style.background = 'rgba(245,158,11,0.08)';
+      conflictPanel.style.borderColor = 'rgba(245,158,11,0.25)';
+      conflictPanel.style.display = 'block';
+    }
+    showToast('✦ Re-scored by Claude!');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+async function saveTaskEdits(taskId, checkOnly=false) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+
+  // Read all edits
+  const newTitle    = document.getElementById('editTaskTitle')?.value.trim() || task.title;
+  const newCat      = document.querySelector('#modalContent .tag-btn.selected')?.dataset.cat || task.category;
+  const newDateVal  = document.getElementById('editTaskDate')?.value;
+  const newStart    = document.getElementById('editStartTime')?.value || task.startTime;
+  const newEnd      = document.getElementById('editEndTime')?.value || task.endTime;
+  const newUrgency  = parseInt(document.getElementById('editUrgency')?.value||task.urgencyScore);
+  const newImport   = parseInt(document.getElementById('editImportance')?.value||task.importanceScore);
+  const newPriority = Math.round(newUrgency*0.5 + newImport*0.5);
+  const newNotes    = document.getElementById('editTaskNotes')?.value || task.userNotes || '';
+  const newTaskDate = newDateVal ? new Date(newDateVal + 'T12:00:00').toDateString() : task.taskDate;
+
+  // Check for time conflicts
+  const conflicts = [];
+  if (newStart && newTaskDate) {
+    const [sh,sm] = newStart.split(':').map(Number);
+    const [eh,em] = (newEnd||'23:59').split(':').map(Number);
+    const newStartMin = sh*60+sm;
+    const newEndMin   = eh*60+em;
+    tasks.forEach(t => {
+      if (t.id === taskId || t.done || t.taskDate !== newTaskDate) return;
+      if (!t.startTime) return;
+      const [tsh,tsm] = t.startTime.split(':').map(Number);
+      const dur = t.chunks.reduce((s,c)=>s+c.duration,0)||60;
+      const tStart = tsh*60+tsm;
+      const tEnd   = tStart + dur;
+      if (newStartMin < tEnd && newEndMin > tStart) {
+        conflicts.push(`"${t.title}" at ${t.startTime}`);
+      }
+    });
+  }
+
+  if (conflicts.length > 0 || checkOnly) {
+    const panel = document.getElementById('conflictPanel');
+    const content = document.getElementById('conflictContent');
+    let msg = '';
+    if (conflicts.length > 0) {
+      msg += `<div style="color:var(--red);margin-bottom:8px">⚠ Overlaps with: ${conflicts.join(', ')}</div>`;
+    }
+
+    // Claude assessment
+    if (apiKey) {
+      try {
+        const today = new Date().toDateString();
+        const todayTasks = tasks.filter(t=>!t.done && t.taskDate === (newTaskDate||today));
+        const totalMin = todayTasks.filter(t=>t.id!==taskId).reduce((s,t)=>s+t.chunks.reduce((cs,c)=>cs+c.duration,0),0);
+        const sys = `You are a productivity life coach. Assess this task change and return ONLY JSON:
+{"verdict":"green|yellow|red","assessment":"2 sentences max","suggestion":"one actionable tip"}`;
+        const res = await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body:JSON.stringify({model:activeModel,max_tokens:200,system:sys,messages:[{role:'user',content:`Task: "${newTitle}" | Category: ${newCat} | Priority: ${newPriority}/10 | Date: ${newTaskDate} | Time: ${newStart}-${newEnd} | Conflicts: ${conflicts.length>0?conflicts.join(', '):'none'} | Already planned that day: ${totalMin} minutes across ${todayTasks.length-1} other tasks`}]})
+        });
+        const data = await res.json();
+        if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
+        const a = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+        const color = a.verdict==='green'?'var(--green)':a.verdict==='red'?'var(--red)':'var(--amber)';
+        const icon  = a.verdict==='green'?'✅':a.verdict==='red'?'🚨':'⚠️';
+        msg += `<div style="margin-bottom:4px">${icon} <strong style="color:${color}">${a.assessment}</strong></div>`;
+        if (a.suggestion) msg += `<div style="color:var(--text-muted)">💡 ${a.suggestion}</div>`;
+        panel.style.background = a.verdict==='red'?'rgba(239,68,68,0.08)':a.verdict==='green'?'rgba(16,185,129,0.08)':'rgba(245,158,11,0.08)';
+        panel.style.borderColor = a.verdict==='red'?'rgba(239,68,68,0.25)':a.verdict==='green'?'rgba(16,185,129,0.25)':'rgba(245,158,11,0.25)';
+      } catch(e) {}
+    } else if (conflicts.length === 0) {
+      msg += `<div style="color:var(--green)">✅ No conflicts found for this time slot.</div>`;
+    }
+
+    if (content) content.innerHTML = msg;
+    if (panel) panel.style.display = 'block';
+    if (checkOnly) return; // Don't save yet — let user review
+  }
+
+  // Apply all edits
+  task.title         = newTitle;
+  task.category      = newCat;
+  task.taskDate      = newTaskDate || task.taskDate;
+  task.startTime     = newStart;
+  task.endTime       = newEnd;
+  task.urgencyScore  = newUrgency;
+  task.importanceScore = newImport;
+  task.priorityScore = newPriority;
+  task.userNotes     = newNotes;
+
+  const fmt12t = t => {
+    if (!t) return '';
+    const [h,m] = t.split(':').map(Number);
+    const ampm = h>=12?'PM':'AM';
+    return `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+  };
+  task.suggestedTimeBlock = newStart ? `${fmt12t(newStart)} - ${fmt12t(newEnd)}` : task.suggestedTimeBlock;
+
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  if (gasConfigured) gasSaveTask(task);
+  renderTasks(); renderTimeline(); renderCalendar2();
+  closeModal();
+  showToast('✓ Task saved!');
+}
+
 function saveTaskNotes(taskId) {
   const task = tasks.find(t=>t.id===taskId);
   if (!task) return;
-  task.userNotes = document.getElementById('taskNotesInput').value;
+  task.userNotes = document.getElementById('taskNotesInput')?.value || document.getElementById('editTaskNotes')?.value || '';
   if (gasConfigured) gasSaveTask(task);
-  else { const i = tasks.findIndex(t=>t.id===taskId); if(i>=0) tasks[i]=task; }
   showToast('✓ Notes saved.');
 }
 
