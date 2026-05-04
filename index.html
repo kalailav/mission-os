@@ -117,6 +117,7 @@
 
     /* ── STATS ── */
     .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    @media (min-width: 480px) { .stats-strip { grid-template-columns: repeat(6, 1fr); } }
     .stat-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 12px; text-align: center;
@@ -632,6 +633,19 @@
     }
     .print-header { display: none; }
     #print-date-header { display: none; }
+    /* ── CHUNK SUBTASKS ── */
+    .chunk-subtask { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border-light); }
+    .chunk-subtasks-wrap { margin-top: 8px; padding: 0 2px; }
+    .chunk-subtask-check { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .chunk-subtask-check.done { background: var(--green); border-color: var(--green); }
+    .chunk-subtask-title { font-size: 12px; color: var(--text); flex: 1; line-height: 1.3; }
+    .chunk-subtask-title.done { text-decoration: line-through; color: var(--text-dim); }
+    .chunk-subtask-dur { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+    .chunk-active .chunk-subtask-title { color: var(--amber); font-weight: 500; }
+    .chunk-active .chunk-subtask-check { border-color: var(--amber); }
+    .chunks-toggle { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; font-family: 'DM Sans', sans-serif; padding: 3px 0; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
+    .chunks-toggle:hover { color: var(--amber); }
+
     .workout-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; position: relative; overflow: hidden; }
     .workout-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
     .workout-card.run::before { background: #f97316; }
@@ -907,11 +921,23 @@
         <div class="stat-val" id="stat-done">0%</div>
         <div class="stat-label">Done</div>
       </div>
+      <div class="stat-card" style="cursor:pointer" onclick="switchView('settings')" title="API usage — click for settings">
+        <div class="stat-val" id="stat-api-calls" style="color:var(--teal)">0</div>
+        <div class="stat-label">API Calls</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="switchView('settings')">
+        <div class="stat-val" id="stat-api-cost" style="color:var(--green);font-size:20px">$0.00</div>
+        <div class="stat-label">Est. Spend</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-api-tokens" style="color:var(--text-muted);font-size:18px">0</div>
+        <div class="stat-label">Tokens</div>
+      </div>
     </div>
 
     <!-- Calendar Upload -->
     <div class="capture-card" style="margin-bottom:20px">
-      <div class="capture-label">📅 Calendar Context</div>
+      <div class="capture-label">📅 Outlook Calendar</div>
       <label class="cal-upload-btn" for="calInput">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         Upload Outlook Calendar Screenshot
@@ -919,11 +945,23 @@
       <input type="file" id="calInput" accept="image/*" style="display:none" onchange="handleCalUpload(event)">
       <div class="cal-preview" id="calPreview"></div>
       <div id="calFreeSlots"></div>
+      <div id="calImportBtn" style="display:none;margin-top:8px">
+        <button onclick="importCalendarAsWorkTasks()" style="width:100%;padding:9px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius-sm);color:var(--indigo);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import Calendar Events as Work Tasks
+        </button>
+      </div>
     </div>
 
     <!-- Quick Add -->
-    <div class="quick-add-wrap">
-      <input class="quick-add-input" id="quickAddInput" type="text" placeholder="Type any task and press ↵ — Claude will validate & chunk it" onkeydown="if(event.key==='Enter')quickAddTask()">
+    <div class="quick-add-wrap" style="flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;width:100%;flex-shrink:0">
+        <button class="tag-btn selected" data-cat="work" onclick="setQuickCat(this)" style="font-size:11px;padding:4px 10px">💼 Work</button>
+        <button class="tag-btn" data-cat="personal" onclick="setQuickCat(this)" style="font-size:11px;padding:4px 10px">🏠 Personal</button>
+        <button class="tag-btn" data-cat="health" onclick="setQuickCat(this)" style="font-size:11px;padding:4px 10px">💪 Health</button>
+        <button class="tag-btn" data-cat="interview" onclick="setQuickCat(this)" style="font-size:11px;padding:4px 10px">🎯 Career</button>
+      </div>
+      <input class="quick-add-input" id="quickAddInput" type="text" placeholder="Type any task and press ↵ — Claude will validate & chunk it" onkeydown="if(event.key==='Enter')quickAddTask()" style="flex:1;min-width:0">
       <button class="quick-add-btn" id="quickAddBtn" onclick="quickAddTask()" title="Analyze & add">+</button>
     </div>
 
@@ -941,10 +979,31 @@
       <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Chunks</div>
       <div id="inlineChunks" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
       <div id="inlineNote" style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:12px;line-height:1.5"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+
+      <!-- Coach Review Panel (shown before Add Now) -->
+      <div id="coachReviewPanel" style="display:none;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:20px">🧠</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;color:var(--amber)">Claude's Take</span>
+        </div>
+        <div id="coachReviewContent" style="font-size:13px;line-height:1.7;color:var(--text);padding:12px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--amber)"></div>
+        <div id="coachConflicts" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm)">
+          <div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">⚠ Time Conflicts</div>
+          <div id="coachConflictList" style="font-size:12px;color:var(--text-muted);line-height:1.6"></div>
+        </div>
+        <div id="coachAlternatives" style="display:none;margin-top:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="action-btn action-btn-secondary" onclick="dismissInline()" style="flex:1">Discard</button>
+          <button class="action-btn action-btn-secondary" style="flex:1;color:var(--teal);border-color:rgba(13,148,136,0.4)" onclick="sendToBacklog()">→ Backlog</button>
+          <button class="action-btn action-btn-primary" onclick="finalAddNow()" style="flex:2;background:var(--green)">✓ Add Anyway</button>
+        </div>
+      </div>
+
+      <!-- Initial action buttons -->
+      <div id="inlineActionBtns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <button class="action-btn action-btn-secondary" onclick="dismissInline()">Discard</button>
         <button class="action-btn action-btn-secondary" style="color:var(--teal);border-color:rgba(13,148,136,0.4)" onclick="sendToBacklog()">→ Backlog</button>
-        <button class="action-btn action-btn-primary" onclick="confirmQuickAdd()">✓ Add Now</button>
+        <button class="action-btn action-btn-primary" onclick="requestCoachReview()" id="addNowBtn">✦ Add Now</button>
       </div>
     </div>
 
@@ -1334,6 +1393,7 @@
         <label>API Key — Claude Sonnet 4.6</label>
         <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
         <button class="primary-btn" style="margin-top:10px" onclick="saveApiKey()">Save for This Session</button>
+        <button onclick="resetApiUsage()" style="margin-top:8px;width:100%;padding:8px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">↺ Reset API Usage Counter</button>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;padding:0 2px">
         Key stored in session memory only—not saved to disk. Get yours at <strong>console.anthropic.com</strong>.<br>
@@ -1877,6 +1937,7 @@ function init() {
   loadGoals();
   loadWorkoutLog();
   loadFitnessGoals();
+  loadApiUsage();
   loadSavedSettings();
   checkVaultExists();
 }
@@ -1964,6 +2025,12 @@ function loadSavedSettings() {
   if (savedSize)   applyFontSize(savedSize);
 }
 
+function setQuickCat(btn) {
+  document.querySelectorAll('.quick-add-wrap .tag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  currentCategory = btn.dataset.cat;
+}
+
 // ── NAV ───────────────────────────────────────────────────────
 function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1996,6 +2063,86 @@ function switchView(view) {
       setTimeout(getTodayRecommendation, 300);
     }
   }
+}
+
+// ── API USAGE TRACKING ────────────────────────────────────────
+let apiUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
+
+function loadApiUsage() {
+  try {
+    const saved = localStorage.getItem('apiUsage');
+    if (saved) apiUsage = { ...apiUsage, ...JSON.parse(saved) };
+  } catch(e) {}
+  updateApiStats();
+}
+
+function trackApiCall(inputTokens, outputTokens) {
+  apiUsage.calls++;
+  apiUsage.inputTokens += (inputTokens || 0);
+  apiUsage.outputTokens += (outputTokens || 0);
+  localStorage.setItem('apiUsage', JSON.stringify(apiUsage));
+  updateApiStats();
+}
+
+function updateApiStats() {
+  // Sonnet 4.6 pricing: $3/M input, $15/M output
+  const cost = (apiUsage.inputTokens / 1e6 * 3) + (apiUsage.outputTokens / 1e6 * 15);
+  const totalTokens = apiUsage.inputTokens + apiUsage.outputTokens;
+  const el1 = document.getElementById('stat-api-calls');
+  const el2 = document.getElementById('stat-api-cost');
+  const el3 = document.getElementById('stat-api-tokens');
+  if (el1) el1.textContent = apiUsage.calls;
+  if (el2) el2.textContent = '$' + cost.toFixed(3);
+  if (el3) el3.textContent = totalTokens > 1000 ? (totalTokens/1000).toFixed(1)+'k' : totalTokens;
+}
+
+// Wrap fetch to auto-track usage
+async function claudeApiCall(messages, systemPrompt, maxTokens=1000) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: activeModel, max_tokens: maxTokens, system: systemPrompt, messages })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  // Track usage
+  if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
+  return data;
+}
+
+// ── IMPORT CALENDAR AS WORK TASKS ────────────────────────────
+let parsedCalendarEvents = [];
+
+function importCalendarAsWorkTasks() {
+  if (!parsedCalendarEvents.length) { showToast('Upload a calendar screenshot first.'); return; }
+  let added = 0;
+  const today = new Date().toDateString();
+  parsedCalendarEvents.forEach(evt => {
+    // Don't duplicate if already exists
+    const exists = tasks.find(t => t.title === evt.title && t.taskDate === today);
+    if (exists) return;
+    const task = {
+      id: Date.now() + Math.random(),
+      title: evt.title,
+      rawInput: evt.title,
+      category: 'work',
+      urgencyScore: 7, importanceScore: 7, priorityScore: 7,
+      chunks: [{ title: evt.title, duration: evt.duration || 60, description: 'From Outlook calendar' }],
+      startTime: evt.startTime || '',
+      endTime: evt.endTime || '',
+      taskDate: today,
+      suggestedTimeBlock: evt.time || '',
+      note: 'Imported from Outlook calendar',
+      userNotes: '', done: false, chunksCompleted: 0,
+      isCalendarBlock: true
+    };
+    if (gasConfigured) gasSaveTask(task);
+    else tasks.push(task);
+    added++;
+  });
+  if (!gasConfigured) { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+  showToast(`✓ Imported ${added} work events from Outlook`);
+  renderCalendar2();
 }
 
 // ── FILTER ───────────────────────────────────────────────────
@@ -2070,22 +2217,32 @@ function handleCalUpload(event) {
         },
         body: JSON.stringify({
           model: activeModel,
-          max_tokens: 800,
+          max_tokens: 1000,
           messages: [{
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: 'Analyze this calendar. Extract busy slots and free slots. Return ONLY JSON: {"blocked":[{"time":"9:00-10:00","title":"Meeting"}],"free":["10:00-11:00","2:00-3:00"]}' }
+              { type: 'text', text: 'Analyze this Outlook calendar screenshot. Extract ALL events/meetings with their exact times and titles. Return ONLY JSON: {"blocked":[{"time":"9:00-10:00","title":"Team Standup","startTime":"09:00","endTime":"10:00","duration":60}],"free":["10:00-11:00","2:00-3:00"]}' }
             ]
           }]
         })
       });
       const data = await response.json();
+      if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
       const text = data.content[0].text;
       const cal = JSON.parse(text.replace(/```json|```/g,'').trim());
       calendarContext = JSON.stringify(cal);
+
+      // Store parsed events for import
+      parsedCalendarEvents = (cal.blocked||[]).map(b => ({
+        title: b.title || 'Meeting',
+        time: b.time || '',
+        startTime: b.startTime || '',
+        endTime: b.endTime || '',
+        duration: b.duration || 60
+      }));
+
       calendarBlocked = (cal.blocked||[]).map(b => {
-        // Parse time strings like "9:00-10:00" or "9:00 AM - 10:00 AM"
         const times = b.time.match(/(\d+):?(\d*)\s*(AM|PM)?\s*[-–]\s*(\d+):?(\d*)\s*(AM|PM)?/i);
         if (!times) return null;
         let sh = parseInt(times[1]), sm = parseInt(times[2]||0);
@@ -2096,12 +2253,17 @@ function handleCalUpload(event) {
         if (epm && eh!==12) eh+=12;
         return { start: sh+sm/60, end: eh+em/60, title: b.title||'Busy' };
       }).filter(Boolean);
+
       preview.innerHTML =
-        `<strong style="color:var(--text)">📅 Calendar parsed</strong><br>` +
-        `<span style="color:var(--red)">Blocked: ${(cal.blocked||[]).map(b=>b.time+' '+b.title).join(', ')||'none'}</span><br>` +
-        `<span style="color:var(--green)">Free: ${(cal.free||[]).join(', ')||'none detected'}</span>`;
+        `<strong style="color:var(--text)">📅 ${parsedCalendarEvents.length} events parsed</strong><br>` +
+        parsedCalendarEvents.map(e=>`<span style="font-size:11px;color:var(--indigo)">💼 ${e.title} ${e.time}</span>`).join('<br>') +
+        `<br><span style="color:var(--green)">Free: ${(cal.free||[]).join(', ')||'none'}</span>`;
       renderFreeSlots(cal.free || []);
-      renderTimeline(); // re-render calendar with blocked slots
+      renderTimeline();
+
+      // Show import button
+      const importBtn = document.getElementById('calImportBtn');
+      if (importBtn && parsedCalendarEvents.length > 0) importBtn.style.display = 'block';
     } catch(err) {
       preview.textContent = '✓ Screenshot saved. Will use as context for task scheduling.';
       calendarContext = 'User uploaded a calendar screenshot but parsing failed.';
@@ -2260,6 +2422,25 @@ function renderTasks() {
       `<div class="chunk-pill ${i < task.chunksCompleted ? 'done' : i === task.chunksCompleted ? 'active' : ''}"></div>`
     ).join('');
     const progress = task.chunks.length > 0 ? `${task.chunksCompleted}/${task.chunks.length} chunks` : '';
+    const chunkSubtasks = task.chunks.length > 0 ? `
+      <div class="chunk-subtasks-wrap" onclick="event.stopPropagation()">
+        <button class="chunks-toggle" onclick="toggleChunksVisible(${task.id},this)">
+          <span id="chunks-arrow-${task.id}">▶</span> ${task.chunks.length} chunks · ${totalTime}m
+        </button>
+        <div id="chunks-list-${task.id}" style="display:none">
+          ${task.chunks.map((c,i) => {
+            const isDone = i < task.chunksCompleted;
+            const isActive = i === task.chunksCompleted && !task.done;
+            return `<div class="chunk-subtask ${isActive?'chunk-active':''}">
+              <div class="chunk-subtask-check ${isDone?'done':''}" onclick="event.stopPropagation();markChunkDone(${task.id},${i})">
+                ${isDone?`<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`:''}
+              </div>
+              <span class="chunk-subtask-title ${isDone?'done':''}">${c.title}</span>
+              <span class="chunk-subtask-dur">${c.duration}m</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
     return `
       <div class="task-card ${task.category} ${task.done?'done':''}" onclick="openTask(${task.id})">
         <div class="task-top">
@@ -2270,11 +2451,11 @@ function renderTasks() {
         </div>
         <div class="task-meta">
           <span class="badge badge-${catBadge}">${task.category}</span>
-          ${totalTime > 0 ? `<span class="task-time">⏱ ${totalTime}m</span>` : ''}
           ${task.suggestedTimeBlock ? `<span class="task-time">📅 ${task.suggestedTimeBlock}</span>` : ''}
           ${progress ? `<span class="task-time">${progress}</span>` : ''}
         </div>
         ${task.chunks.length > 0 ? `<div class="chunk-bar">${bars}</div>` : ''}
+        ${chunkSubtasks}
         ${task.userNotes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--surface2);border-radius:4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${task.userNotes}</div>` : ''}
         <div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">
           ${!task.done ? `
@@ -2382,6 +2563,35 @@ function saveTaskNotes(taskId) {
 
 function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
 
+function toggleChunksVisible(taskId, btn) {
+  const list = document.getElementById(`chunks-list-${taskId}`);
+  const arrow = document.getElementById(`chunks-arrow-${taskId}`);
+  if (!list) return;
+  const open = list.style.display === 'none';
+  list.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▼' : '▶';
+}
+
+function markChunkDone(taskId, chunkIndex) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task || task.done) return;
+  // Allow clicking ahead to mark up to that chunk as done
+  if (chunkIndex < task.chunksCompleted) {
+    // Unmark — reopen from this chunk
+    task.chunksCompleted = chunkIndex;
+    task.done = false;
+  } else {
+    // Mark all up to and including this chunk as done
+    task.chunksCompleted = chunkIndex + 1;
+    if (task.chunksCompleted >= task.chunks.length) task.done = true;
+  }
+  if (gasConfigured) gasSaveTask(task);
+  renderTasks();
+  renderTimeline();
+  renderCalendar2();
+  showToast(task.done ? '🎉 Task complete!' : `Chunk ${task.chunksCompleted}/${task.chunks.length} done!`);
+}
+
 function markNextChunk(taskId) {
   const task = tasks.find(t=>t.id===taskId);
   if (!task || task.done) return;
@@ -2446,6 +2656,179 @@ function updateTaskTime(taskId) {
     task.suggestedTimeBlock = `${fmt(task.startTime)} - ${fmt(task.endTime||calcEndTime(task))}`;
   }
   if (gasConfigured) gasSaveTask(task); else { renderTasks(); renderTimeline(); }
+}
+
+// ── COACH REVIEW ──────────────────────────────────────────────
+async function requestCoachReview() {
+  if (!pendingQuickTask) return;
+  const edited = readEditedTask();
+
+  const btn = document.getElementById('addNowBtn');
+  btn.disabled = true;
+  btn.textContent = '🧠 Thinking...';
+
+  // Build full life context
+  const today = new Date().toDateString();
+  const todayTasks = tasks.filter(t => !t.done && (
+    !t.taskDate || t.taskDate === today
+  ));
+  const totalPlannedMin = todayTasks.reduce((s,t) => s + t.chunks.reduce((cs,c)=>cs+c.duration,0), 0);
+  const newTaskMin = edited.chunks.reduce((s,c)=>s+c.duration, 0);
+  const fitnessGoals = localStorage.getItem('fitnessGoals') || '';
+  const recentWorkout = workoutLog.slice(0,1).map(w=>`${w.title} (${w.date}, effort ${w.effortScore}/10)`).join('') || 'None logged';
+  const activeGoals = goals.slice(0,3).map(g=>`"${g.goal}" — ${g.progressPercent||0}% done`).join('; ') || 'None set';
+
+  // Check time conflicts
+  const conflicts = [];
+  if (pendingQuickTask.suggestedTimeBlock) {
+    const m = pendingQuickTask.suggestedTimeBlock.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (m) {
+      let sh = parseInt(m[1]), sm = parseInt(m[2]);
+      if (m[3].toUpperCase()==='PM'&&sh!==12) sh+=12;
+      if (m[3].toUpperCase()==='AM'&&sh===12) sh=0;
+      const newStart = sh*60+sm;
+      const newEnd = newStart + newTaskMin;
+      todayTasks.forEach(t => {
+        if (!t.startTime) return;
+        const [eh, em] = t.startTime.split(':').map(Number);
+        const eStart = eh*60+em;
+        const eEnd = eStart + t.chunks.reduce((s,c)=>s+c.duration,0);
+        if (newStart < eEnd && newEnd > eStart) {
+          conflicts.push(`"${t.title}" at ${t.suggestedTimeBlock||t.startTime}`);
+        }
+      });
+    }
+  }
+
+  const systemPrompt = `You are Claude — a mentor, friend, and life coach embedded in Mission OS. You care deeply about this person's wellbeing, productivity, health, and goals.
+
+They want to add a new task. Before approving, you review their FULL life context and give honest, warm, direct coaching. You are NOT a rubber stamp — you flag real concerns while being supportive.
+
+Evaluate:
+1. TIME CONFLICTS — is the suggested slot already blocked?
+2. FEASIBILITY — is the time estimate realistic? Are they over-committing?
+3. PRIORITIES — does this fit with their goals and current workload?
+4. WELLBEING — are they overloading themselves? Did they rest? Is health being neglected?
+5. LIFE BALANCE — work/health/personal balance
+
+Return ONLY JSON:
+{
+  "verdict": "green" | "yellow" | "red",
+  "headline": "One punchy mentor sentence (warm, direct, honest)",
+  "assessment": "2-3 sentences of honest coaching. Speak as a trusted friend who knows their whole life. Reference specific context.",
+  "concerns": ["specific concern if any"],
+  "suggestions": ["specific actionable suggestion if any"],
+  "alternativeTime": "suggested better time slot if conflict or overload",
+  "encouragement": "One warm closing sentence"
+}
+
+verdict: green=looks good, yellow=caution/minor issues, red=real problem needs attention`;
+
+  const userMsg = `NEW TASK TO ADD:
+Title: "${edited.title}"
+Category: ${pendingQuickTask.category}
+Duration: ${newTaskMin} minutes (${edited.chunks.length} chunks)
+Suggested time: ${pendingQuickTask.suggestedTimeBlock || 'Not specified'}
+Priority: ${edited.priorityScore}/10
+
+MY FULL CONTEXT TODAY:
+Date: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+Already planned today: ${totalPlannedMin} minutes across ${todayTasks.length} tasks
+Tasks today: ${todayTasks.slice(0,5).map(t=>`"${t.title}" (${t.chunks.reduce((s,c)=>s+c.duration,0)}m, ${t.category})`).join(', ') || 'None'}
+Time conflicts detected: ${conflicts.length > 0 ? conflicts.join(', ') : 'None detected'}
+
+ACTIVE GOALS: ${activeGoals}
+FITNESS GOALS: ${fitnessGoals || 'Not set'}
+LAST WORKOUT: ${recentWorkout}
+BACKLOG SIZE: ${backlog.length} items waiting`;
+
+  if (!apiKey) {
+    // No API key — just check conflicts and show simple feedback
+    showCoachReview({
+      verdict: conflicts.length > 0 ? 'yellow' : 'green',
+      headline: conflicts.length > 0 ? 'Heads up — time conflict detected.' : 'Looks good to add.',
+      assessment: conflicts.length > 0
+        ? `This overlaps with: ${conflicts.join(', ')}. You may want to pick a different time slot.`
+        : `You have ${totalPlannedMin} minutes already planned today. This adds ${newTaskMin} more.`,
+      concerns: conflicts,
+      suggestions: conflicts.length > 0 ? ['Pick a different time slot to avoid the conflict'] : [],
+      alternativeTime: '',
+      encouragement: 'Add your Claude API key in Settings for full life-coach review.'
+    }, conflicts);
+    btn.disabled = false;
+    btn.textContent = '✦ Add Now';
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: activeModel, max_tokens: 700, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
+    const review = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    showCoachReview(review, conflicts);
+  } catch(e) {
+    // Fallback to conflict-only check
+    showCoachReview({
+      verdict: conflicts.length > 0 ? 'yellow' : 'green',
+      headline: conflicts.length > 0 ? 'Time conflict detected.' : 'Ready to add.',
+      assessment: `You have ${totalPlannedMin} minutes planned today. This task adds ${newTaskMin} more minutes.`,
+      concerns: conflicts,
+      suggestions: [],
+      alternativeTime: '',
+      encouragement: 'You\'ve got this.'
+    }, conflicts);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✦ Add Now';
+}
+
+function showCoachReview(review, conflicts) {
+  const panel = document.getElementById('coachReviewPanel');
+  const content = document.getElementById('coachReviewContent');
+  const initBtns = document.getElementById('inlineActionBtns');
+  const conflictsEl = document.getElementById('coachConflicts');
+  const conflictList = document.getElementById('coachConflictList');
+  const altsEl = document.getElementById('coachAlternatives');
+
+  const verdictColor = review.verdict==='green' ? 'var(--green)' : review.verdict==='red' ? 'var(--red)' : 'var(--amber)';
+  const verdictIcon  = review.verdict==='green' ? '✅' : review.verdict==='red' ? '🚨' : '⚠️';
+
+  content.innerHTML = `
+    <div style="font-size:15px;font-weight:600;color:${verdictColor};margin-bottom:8px">${verdictIcon} ${review.headline||''}</div>
+    <div style="margin-bottom:10px;color:var(--text)">${(review.assessment||'').replace(/\n/g,'<br>')}</div>
+    ${(review.concerns||[]).length ? `<div style="margin-bottom:8px">${review.concerns.map(c=>`<div style="display:flex;gap:6px;margin-bottom:3px"><span style="color:var(--amber)">→</span><span style="font-size:12px;color:var(--text-muted)">${c}</span></div>`).join('')}</div>` : ''}
+    ${(review.suggestions||[]).length ? `<div style="margin-bottom:8px">${review.suggestions.map(s=>`<div style="display:flex;gap:6px;margin-bottom:3px"><span style="color:var(--green)">💡</span><span style="font-size:12px;color:var(--text)">${s}</span></div>`).join('')}</div>` : ''}
+    ${review.alternativeTime ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(99,102,241,0.1);border-radius:6px;font-size:12px"><span style="color:var(--indigo);font-weight:600">Better time: </span><span style="color:var(--text)">${review.alternativeTime}</span></div>` : ''}
+    <div style="margin-top:10px;font-size:12px;color:var(--text-muted);font-style:italic">${review.encouragement||''}</div>`;
+
+  if (conflicts.length > 0) {
+    conflictList.innerHTML = conflicts.map(c=>`<div style="display:flex;gap:6px;align-items:center"><span style="color:var(--red)">✕</span> Overlaps with ${c}</div>`).join('');
+    conflictsEl.style.display = 'block';
+  } else {
+    conflictsEl.style.display = 'none';
+  }
+
+  // Update Add Anyway button color based on verdict
+  const addBtn = panel.querySelector('.action-btn-primary');
+  if (addBtn) {
+    addBtn.style.background = review.verdict==='green' ? 'var(--green)' : review.verdict==='red' ? 'var(--red)' : 'var(--amber)';
+    addBtn.textContent = review.verdict==='green' ? '✓ Add to Queue' : review.verdict==='red' ? '⚠ Add Anyway' : '✓ Add Anyway';
+  }
+
+  panel.style.display = 'block';
+  initBtns.style.display = 'none';
+}
+
+function finalAddNow() {
+  document.getElementById('coachReviewPanel').style.display = 'none';
+  document.getElementById('inlineActionBtns').style.display = 'grid';
+  confirmQuickAdd();
 }
 
 // ── QUICK ADD (with Claude validation) ───────────────────────
@@ -2691,6 +3074,10 @@ function sendToBacklog() {
 function dismissInline() {
   document.getElementById('inlineAnalysis').classList.remove('visible');
   document.getElementById('quickAddInput').value = '';
+  document.getElementById('coachReviewPanel').style.display = 'none';
+  document.getElementById('inlineActionBtns').style.display = 'grid';
+  const btn = document.getElementById('addNowBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '✦ Add Now'; }
   pendingQuickTask = null;
 }
 
@@ -2896,6 +3283,7 @@ async function sendChatMessage() {
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
 
     const reply = data.content[0].text;
     chatHistory.push({ role: 'assistant', content: reply });
@@ -3021,6 +3409,7 @@ Based on my recent training load, recovery scores, and fitness goals, give me a 
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
     const rec = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
 
     const focusColor = rec.todayFocus?.includes('Rest') ? 'var(--teal)' :
@@ -3261,6 +3650,7 @@ Rules: metrics should only include what's mentioned — leave others blank. reco
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
     const analysis = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
     pendingWorkout = analysis;
     showHealthAnalysis(analysis);
@@ -3530,6 +3920,7 @@ Rules:
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
+    if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
     result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
 
     // Add metadata
@@ -3828,13 +4219,11 @@ function renderCalendar2() {
     slots.insertBefore(block, hoverLine);
   });
 
-  // Task blocks for this day
+  // Task blocks — render each chunk as a sequential block
   const dateStr = calDate.toDateString();
   tasks.forEach(task => {
     if (task.done) return;
-    // Only show tasks that belong to this date
     if (task.taskDate && task.taskDate !== dateStr) return;
-    // If no taskDate, show on today only
     if (!task.taskDate && dateStr !== new Date().toDateString()) return;
 
     let sh=null, sm=0;
@@ -3848,16 +4237,45 @@ function renderCalendar2() {
       }
     }
     if (sh===null) return;
-    const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0)||30;
-    const y = timeToY2(sh,sm);
-    const bh = (totalMin/60)*CAL2_PX;
-    if (y<0||y>totalH) return;
-    const block = document.createElement('div');
-    block.className = `cal-block ${task.category}`;
-    block.style.cssText = `top:${y}px;height:${Math.max(bh-3,24)}px;position:absolute;left:4px;right:4px`;
-    block.innerHTML = `<div style="font-weight:600;font-size:11px;margin-bottom:1px">${task.title}</div><div style="font-size:9px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>`;
-    block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
-    slots.insertBefore(block, hoverLine);
+
+    if (task.chunks && task.chunks.length > 0) {
+      // Render each chunk as its own block sequentially
+      let offsetMin = sh*60 + sm;
+      task.chunks.forEach((chunk, ci) => {
+        const isDone = ci < task.chunksCompleted;
+        const isActive = ci === task.chunksCompleted;
+        const cH = Math.floor(offsetMin/60);
+        const cM = offsetMin%60;
+        const y = timeToY2(cH, cM);
+        const bh = (chunk.duration/60)*CAL2_PX;
+        if (y < 0 || y > totalH) { offsetMin += chunk.duration; return; }
+
+        const block = document.createElement('div');
+        block.className = `cal-block ${task.category}`;
+        block.style.cssText = `top:${y}px;height:${Math.max(bh-3,22)}px;position:absolute;left:4px;right:4px;opacity:${isDone?0.4:1}`;
+        block.innerHTML = `
+          <div style="font-weight:600;font-size:10px;margin-bottom:1px;display:flex;align-items:center;gap:4px">
+            <span>${isDone?'✓':isActive?'▶':ci+1}</span>
+            <span style="${isDone?'text-decoration:line-through':''}">${chunk.title}</span>
+          </div>
+          <div style="font-size:9px;opacity:0.75">${fmt12(cH,cM)} · ${chunk.duration}m</div>`;
+        block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
+        slots.insertBefore(block, hoverLine);
+        offsetMin += chunk.duration;
+      });
+    } else {
+      // No chunks — render as single block
+      const totalMin = task.chunks.reduce((s,c)=>s+c.duration,0)||30;
+      const y = timeToY2(sh,sm);
+      const bh = (totalMin/60)*CAL2_PX;
+      if (y<0||y>totalH) return;
+      const block = document.createElement('div');
+      block.className = `cal-block ${task.category}`;
+      block.style.cssText = `top:${y}px;height:${Math.max(bh-3,24)}px;position:absolute;left:4px;right:4px`;
+      block.innerHTML = `<div style="font-weight:600;font-size:11px;margin-bottom:1px">${task.title}</div><div style="font-size:9px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>`;
+      block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
+      slots.insertBefore(block, hoverLine);
+    }
   });
 
   // Mouse/touch events for click-to-add
@@ -4194,6 +4612,14 @@ function updateStats() {
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
+function resetApiUsage() {
+  if (!confirm('Reset API usage counters to zero?')) return;
+  apiUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
+  localStorage.setItem('apiUsage', JSON.stringify(apiUsage));
+  updateApiStats();
+  showToast('✓ API usage reset.');
+}
+
 function saveApiKey() {
   apiKey = document.getElementById('apiKeyInput').value.trim();
   activeModel = document.getElementById('modelSelect').value;
