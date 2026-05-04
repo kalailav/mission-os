@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Mission OS</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -974,7 +977,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.5</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.6</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2034,6 +2037,11 @@ function init() {
   loadWorkoutLog();
   loadFitnessGoals();
   loadApiUsage();
+  // Restore calendar blocked slots
+  try {
+    const saved = localStorage.getItem('calendarBlocked');
+    if (saved) calendarBlocked = JSON.parse(saved);
+  } catch(e) {}
   loadSavedSettings();
   checkVaultExists();
 }
@@ -2211,40 +2219,28 @@ async function claudeApiCall(messages, systemPrompt, maxTokens=1000) {
 let parsedCalendarEvents = [];
 
 function syncCalendarToView() {
-  if (!parsedCalendarEvents.length && calendarBlocked.length === 0) {
-    showToast('No calendar events to sync — upload a screenshot first.');
-    return;
-  }
-  // Navigate calendar to the selected date
   const pickerVal = document.getElementById('calSyncDate')?.value;
-  if (pickerVal) calDate = new Date(pickerVal + 'T00:00:00');
+  if (pickerVal) calDate = new Date(pickerVal + 'T12:00:00');
   switchView('calendar');
-  renderCalendar2();
-  showToast(`✓ ${parsedCalendarEvents.length} events shown on calendar`);
+  showToast(`✓ Calendar synced — ${calDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}`);
 }
 
 function importCalendarAsWorkTasks() {
   if (!parsedCalendarEvents.length) { showToast('Upload a calendar screenshot first.'); return; }
 
-  // Get user-selected date from picker — fall back to today
   const pickerVal = document.getElementById('calSyncDate')?.value;
-  const selectedDate = pickerVal
-    ? new Date(pickerVal + 'T00:00:00').toDateString()
-    : new Date().toDateString();
+  // Use picker date, default to today
+  const targetDate = pickerVal ? new Date(pickerVal + 'T12:00:00') : new Date();
+  const taskDate = targetDate.toDateString();
 
   let added = 0;
+  const newTasks = [];
+
   parsedCalendarEvents.forEach(evt => {
-    // Use event's own parsed date if available, otherwise use selected date
-    let taskDate;
-    if (evt.date) {
-      const d = new Date(evt.date + 'T00:00:00');
-      taskDate = isNaN(d) ? selectedDate : d.toDateString();
-    } else {
-      taskDate = selectedDate;
-    }
     // Don't duplicate
     const exists = tasks.find(t => t.title === evt.title && t.taskDate === taskDate);
     if (exists) return;
+
     const task = {
       id: Date.now() + Math.random(),
       title: evt.title,
@@ -2260,19 +2256,21 @@ function importCalendarAsWorkTasks() {
       userNotes: '', done: false, chunksCompleted: 0,
       isCalendarBlock: true
     };
+    newTasks.push(task);
+    tasks.push(task); // Always add to local array immediately
     if (gasConfigured) gasSaveTask(task);
-    else tasks.push(task);
     added++;
   });
-  if (!gasConfigured) { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
 
-  const label = pickerVal
-    ? new Date(pickerVal + 'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
-    : 'today';
-  showToast(`✓ ${added} events synced to ${label}`);
+  // Always re-render immediately from local array
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  renderTasks();
 
-  // Navigate calendar to selected date using picker ISO value directly
-  if (pickerVal) calDate = new Date(pickerVal + 'T00:00:00');
+  const label = targetDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  showToast(`✓ ${added} events added for ${label}`);
+
+  // Navigate calendar to selected date and render
+  calDate = targetDate;
   switchView('calendar');
 }
 
@@ -2383,8 +2381,12 @@ function handleCalUpload(event) {
         const epm = (times[6]||'').toUpperCase()==='PM';
         if (spm && sh!==12) sh+=12;
         if (epm && eh!==12) eh+=12;
-        return { start: sh+sm/60, end: eh+em/60, title: b.title||'Busy' };
+        return { start: sh+sm/60, end: eh+em/60, title: b.title||'Busy', date: b.date||'' };
       }).filter(Boolean);
+
+      // Persist blocked slots to localStorage
+      localStorage.setItem('calendarBlocked', JSON.stringify(calendarBlocked));
+      localStorage.setItem('calendarBlockedDate', document.getElementById('calSyncDate')?.value || new Date().toISOString().slice(0,10));
 
       preview.innerHTML =
         `<strong style="color:var(--text)">📅 ${parsedCalendarEvents.length} events parsed</strong><br>` +
