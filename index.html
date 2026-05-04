@@ -977,7 +977,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.6</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.7</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -1771,7 +1771,13 @@ async function gasPullAll() {
       gasGet('getGoals'),
       gasGet('getWorkouts')
     ]);
-    if (Array.isArray(t)) { tasks = t.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+    if (Array.isArray(t)) {
+      // Merge: keep any locally-added tasks not yet in GAS response
+      const gasIds = new Set(t.map(x => String(x.id)));
+      const localOnly = tasks.filter(x => !gasIds.has(String(x.id)));
+      tasks = [...t, ...localOnly].sort((a,b)=>b.priorityScore-a.priorityScore);
+      renderTasks(); renderTimeline();
+    }
     if (Array.isArray(b)) { backlog = b; renderBacklog(); }
     if (Array.isArray(g)) { goals = g; renderGoals(); }
     if (Array.isArray(w)) {
@@ -2530,7 +2536,10 @@ function approveTask() {
     done: false, chunksCompleted: 0
   };
   if (gasConfigured) { gasSaveTask(task); }
-  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+  // Always add locally so UI updates immediately
+  tasks.push(task);
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  renderTasks(); renderTimeline();
   clearCapture();
   showToast('✓ Task added to queue!');
   switchView('dashboard');
@@ -3191,8 +3200,10 @@ function confirmQuickAdd() {
     note: pendingQuickTask.note||'',
     startTime:'', endTime:'', done:false, chunksCompleted:0
   };
-  if (gasConfigured) { gasSaveTask(task); }
-  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
+  tasks.push(task);
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  if (gasConfigured) gasSaveTask(task);
+  renderTasks(); renderTimeline();
   dismissInline();
   showToast('✓ Task added to queue!');
 }
@@ -4565,7 +4576,11 @@ async function calPopupSave() {
   };
 
   if (gasConfigured) { gasSaveTask(task); }
-  else { tasks.push(task); tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); }
+  else { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); }
+  // Always add to local array immediately so calendar renders without waiting for GAS poll
+  tasks.push(task);
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  renderTasks();
   renderCalendar2();
   renderTimeline();
   showToast('✓ Task added to calendar!');
