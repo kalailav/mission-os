@@ -891,7 +891,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.1</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.2</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2136,10 +2136,17 @@ function syncCalendarToView() {
 function importCalendarAsWorkTasks() {
   if (!parsedCalendarEvents.length) { showToast('Upload a calendar screenshot first.'); return; }
   let added = 0;
-  const today = new Date().toDateString();
   parsedCalendarEvents.forEach(evt => {
-    // Don't duplicate if already exists
-    const exists = tasks.find(t => t.title === evt.title && t.taskDate === today);
+    // Use event's own date if Claude extracted it, fall back to today
+    let taskDate;
+    if (evt.date) {
+      const d = new Date(evt.date + 'T00:00:00');
+      taskDate = isNaN(d) ? new Date().toDateString() : d.toDateString();
+    } else {
+      taskDate = new Date().toDateString();
+    }
+    // Don't duplicate
+    const exists = tasks.find(t => t.title === evt.title && t.taskDate === taskDate);
     if (exists) return;
     const task = {
       id: Date.now() + Math.random(),
@@ -2150,9 +2157,9 @@ function importCalendarAsWorkTasks() {
       chunks: [{ title: evt.title, duration: evt.duration || 60, description: 'From Outlook calendar' }],
       startTime: evt.startTime || '',
       endTime: evt.endTime || '',
-      taskDate: today,
+      taskDate,
       suggestedTimeBlock: evt.time || '',
-      note: 'Imported from Outlook calendar',
+      note: `Imported from Outlook — ${evt.date || taskDate}`,
       userNotes: '', done: false, chunksCompleted: 0,
       isCalendarBlock: true
     };
@@ -2161,7 +2168,7 @@ function importCalendarAsWorkTasks() {
     added++;
   });
   if (!gasConfigured) { tasks.sort((a,b)=>b.priorityScore-a.priorityScore); renderTasks(); renderTimeline(); }
-  showToast(`✓ Imported ${added} work events from Outlook`);
+  showToast(`✓ Imported ${added} events to their correct dates`);
   renderCalendar2();
 }
 
@@ -2242,7 +2249,7 @@ function handleCalUpload(event) {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: 'Analyze this Outlook calendar screenshot. Extract ALL events/meetings with their exact times and titles. Return ONLY JSON: {"blocked":[{"time":"9:00-10:00","title":"Team Standup","startTime":"09:00","endTime":"10:00","duration":60}],"free":["10:00-11:00","2:00-3:00"]}' }
+              { type: 'text', text: `Analyze this Outlook calendar screenshot. Extract ALL events/meetings with their exact times, titles, and dates. Today's date context: ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}. Return ONLY JSON: {"blocked":[{"time":"9:00-10:00","title":"Team Standup","startTime":"09:00","endTime":"10:00","duration":60,"date":"2026-05-03"}],"free":["10:00-11:00","2:00-3:00"]} — use ISO date format YYYY-MM-DD for each event's date. If an event spans multiple days, use the start date.` }
             ]
           }]
         })
@@ -2259,7 +2266,8 @@ function handleCalUpload(event) {
         time: b.time || '',
         startTime: b.startTime || '',
         endTime: b.endTime || '',
-        duration: b.duration || 60
+        duration: b.duration || 60,
+        date: b.date || ''
       }));
 
       calendarBlocked = (cal.blocked||[]).map(b => {
