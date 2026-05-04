@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -289,8 +290,8 @@
     .timeline-block.health   { border-left: 3px solid var(--green); }
     .timeline-block.interview{ border-left: 3px solid var(--amber); }
     .timeline-block.blocked  { border-left: 3px solid var(--text-dim); opacity: 0.4; }
-    .timeline-block-title { font-size: 12px; font-weight: 500; color: var(--text); }
-    .timeline-block-dur { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .timeline-block-title { font-size: 16px; font-weight: 500; color: var(--text); }
+    .timeline-block-dur { font-size:13px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 
     /* ── EXPORT ── */
     .export-btn {
@@ -505,9 +506,9 @@
     .cal-hour-line.current-hour::before { content: ''; position: absolute; left: -1px; top: 0; width: 3px; height: 100%; background: var(--amber); }
     .cal-block {
       position: absolute; left: 4px; right: 4px; border-radius: 6px;
-      padding: 4px 8px; font-size: 11px; font-weight: 500;
+      padding: 6px 10px; font-size: 15px; font-weight: 600;
       overflow: hidden; cursor: pointer; transition: opacity 0.15s;
-      line-height: 1.3; z-index: 2;
+      line-height: 1.4; z-index: 2;
     }
     .cal-block:hover { opacity: 0.85; }
     .cal-block.blocked { background: var(--surface3); color: var(--text-muted); border: 1px solid var(--border); cursor: default; font-style: italic; }
@@ -978,7 +979,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.9</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.04.3</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2346,8 +2347,22 @@ function handleCalUpload(event) {
       return;
     }
     try {
+      console.log('[CAL UPLOAD] API key present:', !!apiKey, '| File:', file.name);
+
+      if (!apiKey) {
+        // No API key — show buttons but tell user they need API key to parse
+        preview.innerHTML = `<strong style="color:var(--amber)">⚠ Add Claude API key in Settings to auto-parse events.</strong><br>
+          <span style="font-size:12px;color:var(--text-muted)">You can still manually enter events by clicking on the Calendar tab.</span>`;
+        const importBtn = document.getElementById('calImportBtn');
+        const syncDate = document.getElementById('calSyncDate');
+        if (importBtn) importBtn.style.display = 'block';
+        if (syncDate && !syncDate.value) syncDate.value = new Date().toISOString().slice(0,10);
+        document.getElementById('calImportCount').textContent = 'API key needed to auto-extract events';
+        return;
+      }
+
+      console.log('[CAL UPLOAD] Sending to Claude for parsing...');
       const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
@@ -2369,7 +2384,10 @@ function handleCalUpload(event) {
       const data = await response.json();
       if (data.usage) trackApiCall(data.usage.input_tokens, data.usage.output_tokens);
       const text = data.content[0].text;
+      console.log('[CAL UPLOAD] Claude response:', text);
       const cal = JSON.parse(text.replace(/```json|```/g,'').trim());
+      console.log('[CAL UPLOAD] Parsed cal object:', cal);
+      console.log('[CAL UPLOAD] Blocked events count:', (cal.blocked||[]).length);
       calendarContext = JSON.stringify(cal);
 
       // Store parsed events for import
@@ -2381,6 +2399,7 @@ function handleCalUpload(event) {
         duration: b.duration || 60,
         date: b.date || ''
       }));
+      console.log('[CAL UPLOAD] parsedCalendarEvents set:', parsedCalendarEvents.length, parsedCalendarEvents);
 
       calendarBlocked = (cal.blocked||[]).map(b => {
         const times = b.time.match(/(\d+):?(\d*)\s*(AM|PM)?\s*[-–]\s*(\d+):?(\d*)\s*(AM|PM)?/i);
@@ -2648,7 +2667,7 @@ function openTask(id) {
       </div>
       <div style="text-align:right">
         <div class="priority-score ${sc}" style="font-size:34px">${task.priorityScore}</div>
-        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
+        <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
       </div>
     </div>
     <div class="time-row">
@@ -3062,14 +3081,14 @@ function showInlineAnalysis(a) {
         style="width:100%;background:transparent;border:none;font-family:'Bebas Neue',sans-serif;
         font-size:22px;color:${color};text-align:center;outline:none;-moz-appearance:textfield"
         oninput="updatePriorityScore()">
-      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">${label}</div>
+      <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">${label}</div>
     </div>`;
   document.getElementById('inlineScores').innerHTML =
     scoreInput(a.urgencyScore,   'editUrgency',    'var(--red)',    'Urgency') +
     scoreInput(a.importanceScore,'editImportance', 'var(--indigo)', 'Importance') +
     `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center">
       <div id="editPriorityDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber)">${a.priorityScore}</div>
-      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
+      <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Priority</div>
     </div>`;
 
   // Editable chunks
@@ -3926,7 +3945,7 @@ function renderWorkoutLog() {
         <div style="display:flex;gap:8px;align-items:center">
           <div style="text-align:center">
             <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber);line-height:1">${w.effortScore||'—'}</div>
-            <div style="font-size:9px;color:var(--text-muted)">EFFORT</div>
+            <div style="font-size:13px;color:var(--text-muted)">EFFORT</div>
           </div>
           <button onclick="printSingleWorkout(${w.id})" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;transition:all 0.15s" title="Print" onmouseover="this.style.color='var(--amber)';this.style.borderColor='var(--amber)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">🖨</button>
           <button onclick="deleteWorkout(${w.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px">✕</button>
@@ -4362,7 +4381,7 @@ function renderCalendar2() {
         const lbl = document.createElement('div');
         const min = frac === 0.25 ? '15' : '45';
         lbl.style.cssText = `position:absolute;right:calc(100% + 8px);top:${frac*100}%;transform:translateY(-50%);
-          font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);white-space:nowrap`;
+          font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);white-space:nowrap`;
         lbl.textContent = `:${min}`;
         // We can't put this in the slots div so skip — just the line
       }
@@ -4373,7 +4392,7 @@ function renderCalendar2() {
         const halfH = h;
         const halfFmt = halfH < 12 ? `${halfH}:30` : halfH === 12 ? `12:30` : `${halfH-12}:30`;
         halfLabel.style.cssText = `position:absolute;left:4px;top:${frac*100}%;transform:translateY(-50%);
-          font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);opacity:0.6;pointer-events:none`;
+          font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);opacity:0.6;pointer-events:none`;
         halfLabel.textContent = halfFmt;
         div.appendChild(halfLabel);
       }
@@ -4402,7 +4421,7 @@ function renderCalendar2() {
     if (y < 0 || h <= 0) return;
     const block = document.createElement('div');
     block.className = 'cal-block blocked';
-    block.style.cssText = `top:${y}px;height:${Math.max(h-2,20)}px;position:absolute;left:4px;right:4px`;
+    block.style.cssText = `top:${y}px;height:${Math.max(h-2,40)}px;position:absolute;left:4px;right:4px`;
     block.textContent = `🔒 ${b.title||'Busy'}`;
     slots.insertBefore(block, hoverLine);
   });
@@ -4454,13 +4473,13 @@ function renderCalendar2() {
 
         const block = document.createElement('div');
         block.className = `cal-block ${task.category}`;
-        block.style.cssText = `top:${y}px;height:${Math.max(bh-3,22)}px;position:absolute;left:4px;right:4px;opacity:${isDone?0.4:1}`;
+        block.style.cssText = `top:${y}px;height:${Math.max(bh-3,44)}px;position:absolute;left:4px;right:4px;opacity:${isDone?0.4:1}`;
         block.innerHTML = `
-          <div style="font-weight:600;font-size:10px;margin-bottom:1px;display:flex;align-items:center;gap:4px">
+          <div style="font-weight:700;font-size:16px;margin-bottom:1px;display:flex;align-items:center;gap:4px">
             <span>${isDone?'✓':isActive?'▶':ci+1}</span>
             <span style="${isDone?'text-decoration:line-through':''}">${chunk.title}</span>
           </div>
-          <div style="font-size:9px;opacity:0.75">${fmt12(cH,cM)} · ${chunk.duration}m</div>`;
+          <div style="font-size:13px;opacity:0.85">${fmt12(cH,cM)} · ${chunk.duration}m</div>`;
         block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
         slots.insertBefore(block, hoverLine);
         offsetMin += chunk.duration;
@@ -4473,8 +4492,8 @@ function renderCalendar2() {
       if (y<0||y>totalH) return;
       const block = document.createElement('div');
       block.className = `cal-block ${task.category}`;
-      block.style.cssText = `top:${y}px;height:${Math.max(bh-3,24)}px;position:absolute;left:4px;right:4px`;
-      block.innerHTML = `<div style="font-weight:600;font-size:11px;margin-bottom:1px">${task.title}</div><div style="font-size:9px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>`;
+      block.style.cssText = `top:${y}px;height:${Math.max(bh-3,44)}px;position:absolute;left:4px;right:4px`;
+      block.innerHTML = `<div style="font-weight:700;font-size:16px;margin-bottom:2px">${task.title}</div><div style="font-size:13px;opacity:0.85">P${task.priorityScore} · ${totalMin}m</div>`;
       block.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
       slots.insertBefore(block, hoverLine);
     }
@@ -4486,8 +4505,8 @@ function renderCalendar2() {
     strip.style.cssText = `position:absolute;left:0;right:0;top:0;z-index:5;display:flex;flex-direction:column;gap:2px;padding:2px 4px`;
     allDayEvents.forEach(task => {
       const pill = document.createElement('div');
-      pill.style.cssText = `background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.4);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:#a5b4fc;cursor:pointer;display:flex;align-items:center;gap:4px`;
-      pill.innerHTML = `<span>📅</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${task.title}</span><span style="opacity:0.6;font-size:9px">All day</span>`;
+      pill.style.cssText = `background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.4);border-radius:4px;padding:3px 8px;font-size:15px;font-weight:700;color:#a5b4fc;cursor:pointer;display:flex;align-items:center;gap:4px`;
+      pill.innerHTML = `<span>📅</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${task.title}</span><span style="opacity:0.6;font-size:13px">All day</span>`;
       pill.onclick = (e) => { e.stopPropagation(); openTask(task.id); };
       strip.appendChild(pill);
     });
@@ -4701,7 +4720,7 @@ function renderTimeline() {
     const y = timeToY(b.start);
     const h = (b.end - b.start) * HOUR_PX;
     if (y < 0 || h <= 0) return;
-    slots.innerHTML += `<div class="cal-block blocked" style="top:${y}px;height:${Math.max(h-2,20)}px">
+    slots.innerHTML += `<div class="cal-block blocked" style="top:${y}px;height:${Math.max(h-2,40)}px">
       🔒 ${b.title || 'Busy'}
     </div>`;
   });
@@ -4730,7 +4749,7 @@ function renderTimeline() {
     const y = timeToY(startH, startM);
     const h = (totalMin/60) * HOUR_PX;
     if (y < 0 || y > totalH) return;
-    slots.innerHTML += `<div class="cal-block ${task.category}" style="top:${y}px;height:${Math.max(h-3,24)}px" onclick="openTask(${task.id})">
+    slots.innerHTML += `<div class="cal-block ${task.category}" style="top:${y}px;height:${Math.max(h-3,44)}px" onclick="openTask(${task.id})">
       <div style="font-weight:600;margin-bottom:1px">${task.title}</div>
       <div style="font-size:10px;opacity:0.8">P${task.priorityScore} · ${totalMin}m</div>
     </div>`;
