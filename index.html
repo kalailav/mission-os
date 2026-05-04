@@ -702,7 +702,8 @@
     .goal-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
     .progress-bar-wrap { background: var(--surface3); border-radius: 4px; height: 6px; margin: 10px 0 4px; overflow: hidden; }
     .progress-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width 0.5s ease; }
-    .cal-interactive-slots { position: relative; cursor: crosshair; }
+    .cal-grid { position: relative; display: grid; grid-template-columns: 58px 1fr; }
+    .cal-hour-labels { display: flex; flex-direction: column; }
     .cal-hover-line { position: absolute; left: 0; right: 0; height: 2px; background: rgba(245,158,11,0.4); pointer-events: none; z-index: 4; display: none; }
     .cal-hover-label { position: absolute; left: 4px; background: var(--amber); color: #000; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; pointer-events: none; z-index: 5; display: none; }
     .cal-selection { position: absolute; left: 4px; right: 4px; background: rgba(245,158,11,0.12); border: 2px dashed var(--amber); border-radius: 6px; pointer-events: none; z-index: 4; display: none; }
@@ -977,7 +978,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.7</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.03.9</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2238,6 +2239,8 @@ function importCalendarAsWorkTasks() {
   // Use picker date, default to today
   const targetDate = pickerVal ? new Date(pickerVal + 'T12:00:00') : new Date();
   const taskDate = targetDate.toDateString();
+  console.log('[IMPORT] Picker value:', pickerVal, '| Target taskDate:', taskDate, '| calDate will be:', targetDate.toDateString());
+  console.log('[IMPORT] Events to import:', parsedCalendarEvents.length, parsedCalendarEvents);
 
   let added = 0;
   const newTasks = [];
@@ -2266,6 +2269,7 @@ function importCalendarAsWorkTasks() {
     tasks.push(task); // Always add to local array immediately
     if (gasConfigured) gasSaveTask(task);
     added++;
+    console.log('[IMPORT] Added task:', task.title, '| taskDate:', task.taskDate, '| startTime:', task.startTime);
   });
 
   // Always re-render immediately from local array
@@ -4262,7 +4266,7 @@ let calPopupDurMin = 30;
 
 const CAL2_START = 6;
 const CAL2_END   = 22;
-const CAL2_PX    = 60; // px per hour
+const CAL2_PX    = 100; // px per hour — spacious for readability
 
 function setCalView(v) {
   calView = v;
@@ -4295,7 +4299,9 @@ function yToTime(y) {
   const totalMin = (y / CAL2_PX) * 60;
   const h = Math.floor(totalMin/60) + CAL2_START;
   const m = Math.round((totalMin%60)/15)*15; // snap to 15min
-  return { h: Math.min(h, CAL2_END-1), m: m===60?0:m };
+  const adjH = m === 60 ? h + 1 : h;
+  const adjM = m === 60 ? 0 : m;
+  return { h: Math.min(adjH, CAL2_END-1), m: adjM };
 }
 
 function fmt12(h, m) {
@@ -4318,10 +4324,10 @@ function renderCalendar2() {
   for (let h = CAL2_START; h <= CAL2_END; h++) hours.push(h);
   const totalH = (CAL2_END - CAL2_START) * CAL2_PX;
 
-  // Hour labels
+  // Hour labels — taller to match new hour height
   labels.innerHTML = hours.map(h => {
     const lbl = h===0?'12AM':h<12?`${h}AM`:h===12?'12PM':`${h-12}PM`;
-    return `<div style="height:${CAL2_PX}px;display:flex;align-items:flex-start;padding-top:2px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);text-align:right;padding-right:8px">${lbl}</div>`;
+    return `<div style="height:${CAL2_PX}px;display:flex;align-items:flex-start;padding-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);text-align:right;padding-right:10px;font-weight:600">${lbl}</div>`;
   }).join('');
 
   // Rebuild slots area (keep hover/selection/popup elements)
@@ -4336,15 +4342,43 @@ function renderCalendar2() {
   // Clear old blocks only
   slots.querySelectorAll('.cal-block, .cal-hour-line2, .cal-now-line').forEach(e => e.remove());
 
-  // Hour lines
-  hours.forEach((h,i) => {
+  // Hour lines with 15-minute increments
+  hours.forEach((h, i) => {
     const div = document.createElement('div');
     div.className = 'cal-hour-line2';
-    div.style.cssText = `position:absolute;left:0;right:0;top:${i*CAL2_PX}px;height:${CAL2_PX}px;border-bottom:1px solid var(--border-light);box-sizing:border-box`;
-    // Half-hour dashed line
-    const half = document.createElement('div');
-    half.style.cssText = `position:absolute;left:0;right:0;top:50%;border-bottom:1px dashed var(--border-light);opacity:0.4`;
-    div.appendChild(half);
+    div.style.cssText = `position:absolute;left:0;right:0;top:${i*CAL2_PX}px;height:${CAL2_PX}px;border-bottom:1px solid var(--border);box-sizing:border-box`;
+
+    // 15-minute tick marks at :15, :30, :45
+    [0.25, 0.5, 0.75].forEach((frac, qi) => {
+      const tick = document.createElement('div');
+      const isHalf = qi === 1;
+      tick.style.cssText = `position:absolute;left:0;right:0;top:${frac*100}%;
+        border-bottom:1px ${isHalf ? 'solid' : 'dashed'} var(--border-light);
+        opacity:${isHalf ? 0.6 : 0.35}`;
+      div.appendChild(tick);
+
+      // :15 and :45 time labels on left
+      if (!isHalf) {
+        const lbl = document.createElement('div');
+        const min = frac === 0.25 ? '15' : '45';
+        lbl.style.cssText = `position:absolute;right:calc(100% + 8px);top:${frac*100}%;transform:translateY(-50%);
+          font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);white-space:nowrap`;
+        lbl.textContent = `:${min}`;
+        // We can't put this in the slots div so skip — just the line
+      }
+
+      // :30 gets a slightly darker line and a :30 label
+      if (isHalf) {
+        const halfLabel = document.createElement('div');
+        const halfH = h;
+        const halfFmt = halfH < 12 ? `${halfH}:30` : halfH === 12 ? `12:30` : `${halfH-12}:30`;
+        halfLabel.style.cssText = `position:absolute;left:4px;top:${frac*100}%;transform:translateY(-50%);
+          font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);opacity:0.6;pointer-events:none`;
+        halfLabel.textContent = halfFmt;
+        div.appendChild(halfLabel);
+      }
+    });
+
     slots.insertBefore(div, hoverLine);
   });
 
@@ -4376,10 +4410,16 @@ function renderCalendar2() {
   // Task blocks — render each chunk as a sequential block
   const dateStr = calDate.toDateString();
   const allDayEvents = [];
-  tasks.forEach(task => {
-    if (task.done) return;
-    if (task.taskDate && task.taskDate !== dateStr) return;
-    if (!task.taskDate && dateStr !== new Date().toDateString()) return;
+  console.log('[CAL] Rendering date:', dateStr, '| Total tasks:', tasks.length);
+  const todayTasks = tasks.filter(t => {
+    if (t.done) return false;
+    if (t.taskDate && t.taskDate !== dateStr) return false;
+    if (!t.taskDate && dateStr !== new Date().toDateString()) return false;
+    return true;
+  });
+  console.log('[CAL] Tasks for this date:', todayTasks.length, todayTasks.map(t => `"${t.title}" taskDate=${t.taskDate} startTime=${t.startTime}`));
+
+  todayTasks.forEach(task => {
 
     let sh=null, sm=0;
     if (task.startTime) {
