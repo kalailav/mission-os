@@ -979,7 +979,7 @@
     <span class="brand">MISSION OS</span>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="header-date" id="currentDate"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.04.5</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:0.5px">v2026.05.04.6</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
         <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
       </button>
@@ -2739,6 +2739,57 @@ function openTask(id) {
         onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">${task.userNotes||''}</textarea>
     </div>
 
+    <!-- Chunks / Sub-tasks -->
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Chunks (Sub-tasks)</div>
+        <span style="font-size:11px;color:var(--text-muted)">${task.chunks.length} chunks · ${task.chunks.reduce((s,c)=>s+c.duration,0)}m total</span>
+      </div>
+      <div id="modalChunksList">
+        ${(task.chunks||[]).map((chunk, ci) => {
+          const isDone = ci < task.chunksCompleted;
+          const isActive = ci === task.chunksCompleted && !task.done;
+          const chunkStart = (() => {
+            if (!task.startTime) return '';
+            const [h,m] = task.startTime.split(':').map(Number);
+            let offset = h*60+m;
+            for (let j=0; j<ci; j++) offset += (task.chunks[j]?.duration||30);
+            return String(Math.floor(offset/60)%24).padStart(2,'0') + ':' + String(offset%60).padStart(2,'0');
+          })();
+          return `
+          <div style="background:var(--surface2);border:1px solid ${isActive?'var(--amber)':isDone?'var(--green)':'var(--border)'};border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="width:22px;height:22px;border-radius:50%;background:${isDone?'var(--green)':isActive?'var(--amber)':'var(--surface3)'};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:${isDone||isActive?'#000':'var(--text-muted)'};flex-shrink:0;cursor:pointer"
+                onclick="markChunkDone(${id},${ci});closeModal();openTask(${id})">${isDone?'✓':ci+1}</div>
+              <input type="text" id="chunkTitle_m_${id}_${ci}" value="${(chunk.title||'').replace(/"/g,'&quot;')}"
+                style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:2px 4px;outline:none;${isDone?'text-decoration:line-through;opacity:0.5':''}"
+                onfocus="this.style.borderBottomColor='var(--amber)'" onblur="this.style.borderBottomColor='var(--border)'">
+              <button onclick="removeModalChunk(${id},${ci})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:2px;flex-shrink:0">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:8px;align-items:center">
+              <span style="font-size:12px;color:var(--text-muted)">⏱</span>
+              <input type="number" id="chunkDur_m_${id}_${ci}" value="${chunk.duration||30}" min="5" max="480"
+                style="background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:5px 8px;outline:none;text-align:center;width:70px"
+                placeholder="mins">
+              <span style="font-size:12px;color:var(--text-muted)">📅</span>
+              <input type="time" id="chunkTime_m_${id}_${ci}" value="${chunkStart}"
+                style="background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:5px 8px;outline:none;color-scheme:dark;flex:1">
+            </div>
+            ${chunkStart ? `<div style="margin-top:6px">
+              <button onclick="addChunkToCalendar(${id},${ci})" style="padding:4px 10px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;color:var(--indigo);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer">
+                📅 Add this chunk to calendar
+              </button>
+            </div>` : ''}
+          </div>`
+        }).join('')}
+      </div>
+      <button onclick="addModalChunk(${id})" style="width:100%;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s;margin-top:2px"
+        onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+        + Add Chunk
+      </button>
+    </div>
+
     <!-- Conflict Check Panel -->
     <div id="conflictPanel" style="display:none;margin-bottom:14px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm)">
       <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">⚠ Conflict / Claude's Assessment</div>
@@ -2771,8 +2822,91 @@ function openTask(id) {
   document.getElementById('taskModal').classList.add('open');
 }
 
+function addModalChunk(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  const ci = task.chunks.length + document.querySelectorAll('[id^="chunkTitle_m_"]').length - task.chunks.length;
+  const idx = document.querySelectorAll('[id^="chunkTitle_m_"]').length;
+  const list = document.getElementById('modalChunksList');
+  if (!list) return;
+  const addBtn = list.nextElementSibling;
+  const div = document.createElement('div');
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--text-muted)">${idx+1}</div>
+      <input type="text" id="chunkTitle_m_${taskId}_${idx}" placeholder="Chunk title..."
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:2px 4px;outline:none"
+        onfocus="this.style.borderBottomColor='var(--amber)'" onblur="this.style.borderBottomColor='var(--border)'">
+      <button onclick="this.closest('div[style]').remove()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:2px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--text-muted)">⏱</span>
+      <input type="number" id="chunkDur_m_${taskId}_${idx}" value="30" min="5" max="480"
+        style="background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:5px 8px;outline:none;text-align:center;width:70px">
+      <span style="font-size:12px;color:var(--text-muted)">📅</span>
+      <input type="time" id="chunkTime_m_${taskId}_${idx}"
+        style="background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:5px 8px;outline:none;color-scheme:dark">
+    </div>`;
+  list.insertBefore(div, addBtn);
+  div.querySelector('input[type="text"]').focus();
+}
+
+function removeModalChunk(taskId, chunkIdx) {
+  const el = document.getElementById(`chunkTitle_m_${taskId}_${chunkIdx}`);
+  if (el) el.closest('div[style]').remove();
+}
+
+function addChunkToCalendar(taskId, chunkIdx) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  const chunk = task.chunks[chunkIdx];
+  if (!chunk) return;
+
+  // Get chunk's time from modal input or calculate from task start
+  const timeEl = document.getElementById(`chunkTime_m_${taskId}_${chunkIdx}`);
+  let startTime = timeEl?.value || task.startTime || '09:00';
+
+  // If not explicitly set, calculate sequential offset
+  if (!timeEl?.value && task.startTime) {
+    const [h,m] = task.startTime.split(':').map(Number);
+    let offset = h*60+m;
+    for (let j=0; j<chunkIdx; j++) offset += (task.chunks[j]?.duration||30);
+    startTime = String(Math.floor(offset/60)%24).padStart(2,'0') + ':' + String(offset%60).padStart(2,'0');
+  }
+
+  const [sh,sm] = startTime.split(':').map(Number);
+  const endMin = sh*60+sm+(chunk.duration||30);
+  const endTime = String(Math.floor(endMin/60)%24).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+
+  const chunkTask = {
+    id: Date.now() + Math.random(),
+    title: `[${chunkIdx+1}] ${chunk.title}`,
+    rawInput: chunk.title,
+    category: task.category,
+    urgencyScore: task.urgencyScore, importanceScore: task.importanceScore, priorityScore: task.priorityScore,
+    chunks: [{ title: chunk.title, duration: chunk.duration||30, description: chunk.description||'' }],
+    startTime,
+    endTime,
+    taskDate: task.taskDate || new Date().toDateString(),
+    suggestedTimeBlock: `${fmt12(sh,sm)} - ${fmt12(Math.floor(endMin/60)%24, endMin%60)}`,
+    note: `Chunk ${chunkIdx+1} of "${task.title}"`,
+    userNotes: '', done: false, chunksCompleted: 0,
+    parentTaskId: taskId
+  };
+
+  tasks.push(chunkTask);
+  tasks.sort((a,b)=>b.priorityScore-a.priorityScore);
+  if (gasConfigured) gasSaveTask(chunkTask);
+  renderTasks(); renderCalendar2();
+  showToast(`📅 Chunk "${chunk.title}" added to calendar!`);
+  closeModal();
+}
+window.addChunkToCalendar = function(tid,ci) { return addChunkToCalendar(tid,ci); };
+window.addModalChunk = function(tid) { return addModalChunk(tid); };
+window.removeModalChunk = function(tid,ci) { return removeModalChunk(tid,ci); };
+
 function recalcPriority() {
-  const u = parseInt(document.getElementById('editUrgency')?.value||5);
   const i = parseInt(document.getElementById('editImportance')?.value||5);
   const p = Math.round(u*0.5 + i*0.5);
   const el = document.getElementById('priValDisplay');
@@ -2890,7 +3024,37 @@ async function saveTaskEdits(taskId, checkOnly=false) {
     if (checkOnly) return; // Don't save yet — let user review
   }
 
-  // Apply all edits
+  // Read chunks from modal
+  const chunkCount = task.chunks.length;
+  const editedChunks = [];
+  for (let ci = 0; ci < chunkCount; ci++) {
+    const titleEl = document.getElementById(`chunkTitle_m_${id}_${ci}`);
+    const durEl   = document.getElementById(`chunkDur_m_${id}_${ci}`);
+    const timeEl  = document.getElementById(`chunkTime_m_${id}_${ci}`);
+    if (!titleEl) continue; // chunk was removed
+    const t = titleEl.value.trim();
+    if (!t) continue;
+    editedChunks.push({
+      title: t,
+      duration: parseInt(durEl?.value||30),
+      description: task.chunks[ci]?.description || '',
+      startTime: timeEl?.value || '',
+    });
+  }
+  // Also check for newly added chunks beyond original count
+  let extraIdx = chunkCount;
+  while (true) {
+    const titleEl = document.getElementById(`chunkTitle_m_${id}_${extraIdx}`);
+    if (!titleEl) break;
+    const t = titleEl.value.trim();
+    if (t) editedChunks.push({
+      title: t,
+      duration: parseInt(document.getElementById(`chunkDur_m_${id}_${extraIdx}`)?.value||30),
+      description: '',
+      startTime: document.getElementById(`chunkTime_m_${id}_${extraIdx}`)?.value || '',
+    });
+    extraIdx++;
+  }
   task.title         = newTitle;
   task.category      = newCat;
   task.taskDate      = newTaskDate || task.taskDate;
@@ -2900,6 +3064,7 @@ async function saveTaskEdits(taskId, checkOnly=false) {
   task.importanceScore = newImport;
   task.priorityScore = newPriority;
   task.userNotes     = newNotes;
+  if (editedChunks.length > 0) task.chunks = editedChunks;
 
   const fmt12t = t => {
     if (!t) return '';
